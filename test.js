@@ -51,13 +51,12 @@ function parseRecord(data) {
       case 'date':
         var aux = data[i].split('/')
         var dateString = aux[2] + '-' + aux[1] + '-' + aux[0] + 'T00:00:00Z'
-        console.log(`trying to get ${dateString}...${data[i]}`)
         var value = new Date(dateString).toISOString().slice(0,-5)
         break
       default:
         throw new Error(`Type '${titles[i].type}' is unknown`)
     }
-    record[title[i].name] = value
+    record[titles[i].name] = value
   }
   return record
 }
@@ -73,10 +72,11 @@ async function main() {
   var filename = csv_filenames[0]
   var data = fs.readFileSync(filename, 'utf8')
   var lines = data.split('\n')
-  var records = {}
+  var records = []
   for(var i in lines){
     var line = lines[i]
     var fields = line.split(';')
+    if(fields.length < expectedTitles.length) continue
 
     if(i==0){ //verify titles
       for(var j in fields){
