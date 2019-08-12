@@ -43,10 +43,10 @@ function parseRecord(data) {
   for(var i in titles){
     switch(titles[i].type){
       case 'string':
-        var value = data[i]
+        var value = data[i].trim().replace(/ +(?= )/g,'').toLowerCase()
         break
       case 'number':
-        var value = parseFloat(data[i])
+        var value = parseFloat(data[i].replace(',','.'))
         break
       case 'date':
         var aux = data[i].split('/')
@@ -59,6 +59,14 @@ function parseRecord(data) {
     record[titles[i].name] = value
   }
   return record
+}
+
+function verifyTitles(fields) {
+  for(var j in fields){
+    fields[j] = fields[j].replace(/[^a-zA-Z0-9 ]/g, "")
+    if( fields[j] !== expectedTitles[j] )
+      throw new Error(`The title '${fields[j]}' should be equal to '${expectedTitles[j]}'. Filename: '${filename}'`)
+  }
 }
 
 async function main() {
@@ -74,20 +82,21 @@ async function main() {
   var lines = data.split('\n')
   var records = []
   for(var i in lines){
-    var line = lines[i]
-    var fields = line.split(';')
-    if(fields.length < expectedTitles.length) continue
+    try{
+      var line = lines[i]
+      var fields = line.split(';')
+      if(fields.length < expectedTitles.length) continue
 
-    if(i==0){ //verify titles
-      for(var j in fields){
-        fields[j] = fields[j].replace(/[^a-zA-Z0-9 ]/g, "")
-        if( fields[j] !== expectedTitles[j] )
-          throw new Error(`The title '${fields[j]}' should be equal to '${expectedTitles[j]}'. Filename: '${filename}'`)
+      if(i==0){
+        verifyTitles(fields)
+        continue
       }
-      continue
+      var record = parseRecord(fields)
+      records.push(record)
+    }catch(error){
+      console.log(`Error in file '${filename}', line ${i+1}`)
+      throw error
     }
-    var record = parseRecord(fields)
-    records.push(record)
   }
   console.log(records)
 }
