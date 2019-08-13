@@ -1,6 +1,15 @@
-const fs = require('fs');
-const util = require('util');
-const readdir = util.promisify(fs.readdir);
+const fs = require('fs')
+const util = require('util')
+const config = require('./config')
+
+const readdir = util.promisify(fs.readdir)
+const writeFile = util.promisify(fs.writeFile)
+
+var db = []
+var state = {}
+
+const now = ()=>{ return new Date().toISOString().slice(0,-5) }
+const log = (text)=>{ console.log(now() + ' - ' + text) }
 
 const expectedTitles = [
   'Date transaction',
@@ -58,7 +67,57 @@ function parseRecord(data) {
     }
     record[titles[i].name] = value
   }
+  record.category = estimateCategory(record)
   return record
+}
+
+function estimateCategory(r) {
+  var d = r.description
+  if(d.includes('transfer in favour of min des affaires etrangeres dir imm'))
+    return config.CATEGORY.legal
+  if(d.includes('cash deposit'))
+    return config.CATEGORY.entradas
+  if(d.includes('tpv cactus'))
+    return config.CATEGORY.otros
+  if(d.includes('tpv lidl'))
+    return config.CATEGORY.supermercado
+  if(d.includes('tpv delhaize'))
+    return config.CATEGORY.supermercado
+  if(d.includes('transfer from fujitsu'))
+    return config.CATEGORY.entradas
+  if(d.includes('in favour of residence bougainviller'))
+    return config.CATEGORY.basicos
+  if(d.includes('in favour of effekt'))
+    return config.CATEGORY.basicos
+  if(d.includes('in favour of foyer assurances'))
+    return config.CATEGORY.basicos
+  if(d.includes('tpv red beef'))
+    return config.CATEGORY.fuera
+  if(d.includes('tpv saturn'))
+    return config.CATEGORY.otros
+  if(d.includes('tpv colruyt'))
+    return config.CATEGORY.supermercado
+  if(d.includes('tpv aldi'))
+    return config.CATEGORY.supermercado
+  if(d.includes('tpv quick'))
+    return config.CATEGORY.fuera
+  if(d.includes('tpv orchestra'))
+    return config.CATEGORY.otros
+  if(d.includes('tpv kebab'))
+    return config.CATEGORY.fuera
+  if(d.includes('tpv monop'))
+    return config.CATEGORY.supermercado
+  if(d.includes('tpv pizza hut'))
+    return config.CATEGORY.fuera
+  if(d.includes('tpv cfl'))
+    return config.CATEGORY.transporte
+  if(d.includes('tpv mc donald'))
+    return config.CATEGORY.fuera
+  if(d.includes('tpv pharmacie'))
+    return config.CATEGORY.salud
+  if(d.includes('cash withdrawal'))
+    return config.CATEGORY.efectivo
+  return config.CATEGORY.otros
 }
 
 function verifyTitles(fields) {
@@ -69,36 +128,85 @@ function verifyTitles(fields) {
   }
 }
 
-async function main() {
+async function processNewFiles() {
   var names = await readdir('./')
   var csv_filenames = []
   for(var i in names)
     if(names[i].substring(names[i].length-3) === 'csv')
       csv_filenames.push( names[i] )
-  console.log(csv_filenames)
-  
-  var filename = csv_filenames[0]
-  var data = fs.readFileSync(filename, 'utf8')
-  var lines = data.split('\n')
-  var records = []
-  for(var i in lines){
-    try{
-      var line = lines[i]
-      var fields = line.split(';')
-      if(fields.length < expectedTitles.length) continue
 
-      if(i==0){
-        verifyTitles(fields)
-        continue
+  for(var f in csv_filenames){
+    var filename = csv_filenames[f]
+
+    if(state && state.processed_files && state.processed_files.length > 0){
+      var file_processed = state.processed_files.find( (p)=>{return p.file === filename} )
+      if(file_processed) continue
+    }
+
+    var data = fs.readFileSync(filename, 'utf8')
+    var lines = data.split('\n')
+    var records = []
+    var hasError = false
+    for(var i in lines){
+      try{
+        var line = lines[i]
+        var fields = line.split(';')
+        if(fields.length < expectedTitles.length)
+          continue
+        if(i==0){
+          verifyTitles(fields)
+          continue
+        }
+        var record = parseRecord(fields)
+        records.push(record)
+      }catch(error){
+        log(`Error in file '${filename}', line ${i}`)
+        log(error.message)
+        hasError = true
+        break
       }
-      var record = parseRecord(fields)
-      records.push(record)
-    }catch(error){
-      console.log(`Error in file '${filename}', line ${i+1}`)
-      throw error
+    }
+
+    if(!hasError){
+      if(!state.processed_files) state.processed_files = []
+      state.processed_files.push({
+        file: filename,
+        time: now()
+      })
+      for(var i in records)
+        db.push(records[i])
+      log(`New file processed: ${filename}`)
+      log(`${records.length} records added`)
+      await save()
     }
   }
-  console.log(records)
+}
+
+async function save(){
+  await writeFile(config.DB_FILENAME, JSON.stringify(db))
+  await writeFile(config.STATE_FILENAME, JSON.stringify(state))
+}
+
+async function main() {
+  if( !fs.existsSync(config.DB_FILENAME) ){
+    log(`Database ${config.DB_FILENAME} does not exists. Creating a new file`)
+    await writeFile(config.DB_FILENAME, '[]')
+  }
+  if( !fs.existsSync(config.STATE_FILENAME) ){
+    log(`${config.STATE_FILENAME} does not exists. Creating a new file`)
+    await writeFile(config.STATE_FILENAME, '{}')
+  }
+  db = fs.readFileSync(config.DB_FILENAME, 'utf-8')
+  state = fs.readFileSync(config.STATE_FILENAME, 'utf-8')
+
+  db = JSON.parse(db)
+  state = JSON.parse(state)
+
+  await processNewFiles()
+  /*db.forEach( (r)=>{
+    console.log(r.description)
+    console.log(r.msg1)
+  })*/
 }
 
 main()
