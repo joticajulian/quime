@@ -1,2 +1,8 @@
 node_modules/
 *.csv
+config.js
+accounts.js
+
+db.json
+state.json
+

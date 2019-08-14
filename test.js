@@ -71,55 +71,6 @@ function parseRecord(data) {
   return record
 }
 
-function estimateCategory(r) {
-  var d = r.description
-  if(d.includes('transfer in favour of min des affaires etrangeres dir imm'))
-    return config.CATEGORY.legal
-  if(d.includes('cash deposit'))
-    return config.CATEGORY.entradas
-  if(d.includes('tpv cactus'))
-    return config.CATEGORY.otros
-  if(d.includes('tpv lidl'))
-    return config.CATEGORY.supermercado
-  if(d.includes('tpv delhaize'))
-    return config.CATEGORY.supermercado
-  if(d.includes('transfer from fujitsu'))
-    return config.CATEGORY.entradas
-  if(d.includes('in favour of residence bougainviller'))
-    return config.CATEGORY.basicos
-  if(d.includes('in favour of effekt'))
-    return config.CATEGORY.basicos
-  if(d.includes('in favour of foyer assurances'))
-    return config.CATEGORY.basicos
-  if(d.includes('tpv red beef'))
-    return config.CATEGORY.fuera
-  if(d.includes('tpv saturn'))
-    return config.CATEGORY.otros
-  if(d.includes('tpv colruyt'))
-    return config.CATEGORY.supermercado
-  if(d.includes('tpv aldi'))
-    return config.CATEGORY.supermercado
-  if(d.includes('tpv quick'))
-    return config.CATEGORY.fuera
-  if(d.includes('tpv orchestra'))
-    return config.CATEGORY.otros
-  if(d.includes('tpv kebab'))
-    return config.CATEGORY.fuera
-  if(d.includes('tpv monop'))
-    return config.CATEGORY.supermercado
-  if(d.includes('tpv pizza hut'))
-    return config.CATEGORY.fuera
-  if(d.includes('tpv cfl'))
-    return config.CATEGORY.transporte
-  if(d.includes('tpv mc donald'))
-    return config.CATEGORY.fuera
-  if(d.includes('tpv pharmacie'))
-    return config.CATEGORY.salud
-  if(d.includes('cash withdrawal'))
-    return config.CATEGORY.efectivo
-  return config.CATEGORY.otros
-}
-
 function verifyTitles(fields) {
   for(var j in fields){
     fields[j] = fields[j].replace(/[^a-zA-Z0-9 ]/g, "")
