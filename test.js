@@ -1,6 +1,7 @@
 const fs = require('fs')
 const util = require('util')
 const config = require('./config')
+const Accounts = require('./accounts')
 
 const readdir = util.promisify(fs.readdir)
 const writeFile = util.promisify(fs.writeFile)
@@ -30,7 +31,7 @@ const expectedTitles = [
 ]
 
 const titles = [
-  {name: 'date_transaction', type: 'date'},
+  {name: 'date', type: 'date'},
   {name: 'description', type: 'string'},
   {name: 'date_value', type: 'date'},
   {name: 'amount_eur', type: 'number'},
@@ -67,7 +68,15 @@ function parseRecord(data) {
     }
     record[titles[i].name] = value
   }
-  record.category = estimateCategory(record)
+  var account = Accounts.estimateAccount(record)
+  if(value >= 0){
+    record.debit = account.debit
+    record.credit = account.credit
+  }else{
+    record.value = -record.value //store only positive number, then the relation debit/credit changes
+    record.debit = account.credit
+    record.credit = account.debit
+  }
   return record
 }
 
@@ -124,13 +133,50 @@ async function processNewFiles() {
         file: filename,
         time: now()
       })
-      for(var i in records)
-        db.push(records[i])
+
+      var appended = true
+      var changed_from = -1
+      for(var i in records){
+        var result = insertRecord(records[i])
+        if(!result.appended){
+          appended = false
+          if(result.changed_from < changed_from || changed_from == -1)
+            changed_from = result.changed_from
+        }
+      }
+      if(!appended){
+        // recalculate balances from "changed_from"
+      }
+
       log(`New file processed: ${filename}`)
       log(`${records.length} records added`)
+      if(!appended){
+        log(`There are records in the past. Balances and reports recalculated from date ${new Date(db[changed_from].date+'Z').toISOString().slice(0,-5)}`)
+      }
       await save()
     }
   }
+}
+
+function insertRecord(record){
+  if(db.length == 0){
+    db.push(record)
+    return {appended:true}
+  }
+
+  var dateRecord = new Date(record.date+'Z')
+  var dateDB = new Date(db[db.length-1].date+'Z')
+
+  if(dateRecord >= dateDB){
+    db.push(record)
+    return {appended:true}
+  }
+
+  var index = db.findIndex( (r)=>{return new Date(r.date+'Z') > dateRecord})
+  if(index < 0)
+    throw new Error(`Database error: index = -1, db.length:${db.length}, db date:${new Date(db[db.length-1].date+'Z').toISOString()}, record to insert:${JSON.stringify(record)}`)
+  db.splice(index, 0, record)
+  return {appended:false, changed_from:index}
 }
 
 async function save(){
