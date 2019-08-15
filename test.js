@@ -69,11 +69,11 @@ function parseRecord(data) {
     record[titles[i].name] = value
   }
   var account = Accounts.estimateAccount(record)
-  if(value >= 0){
+  if(record.amount_eur >= 0){
     record.debit = account.debit
     record.credit = account.credit
   }else{
-    record.value = -record.value //store only positive number, then the relation debit/credit changes
+    record.amount_eur = -record.amount_eur //store only positive number, then the relation debit/credit changes
     record.debit = account.credit
     record.credit = account.debit
   }
