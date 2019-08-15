@@ -34,7 +34,7 @@ const titles = [
   {name: 'date', type: 'date'},
   {name: 'description', type: 'string'},
   {name: 'date_value', type: 'date'},
-  {name: 'amount_eur', type: 'number'},
+  {name: 'amount', type: 'number'},
   {name: 'extrait', type: 'number'},
   {name: 'balance', type: 'number'},
   {name: 'operation', type: 'string'},
@@ -69,11 +69,11 @@ function parseRecord(data) {
     record[titles[i].name] = value
   }
   var account = Accounts.estimateAccount(record)
-  if(record.amount_eur >= 0){
+  if(record.amount >= 0){
     record.debit = account.debit
     record.credit = account.credit
   }else{
-    record.amount_eur = -record.amount_eur //store only positive number, then the relation debit/credit changes
+    record.amount = -record.amount //store only positive number, then the relation debit/credit changes
     record.debit = account.credit
     record.credit = account.debit
   }
@@ -140,13 +140,13 @@ async function processNewFiles() {
         var result = insertRecord(records[i])
         if(!result.appended){
           appended = false
-          if(result.changed_from < changed_from || changed_from == -1)
-            changed_from = result.changed_from
+        }
+        if(result.changed_from < changed_from || changed_from == -1){
+          changed_from = result.changed_from
         }
       }
-      if(!appended){
-        // recalculate balances from "changed_from"
-      }
+
+      if(changed_from >= 0) recalculateBalances(changed_from)
 
       log(`New file processed: ${filename}`)
       log(`${records.length} records added`)
@@ -158,10 +158,54 @@ async function processNewFiles() {
   }
 }
 
+function recalculateBalances(index){
+  if(!state.balances){
+    state.balances = {
+      global: []
+    }
+
+    for(var i in Accounts.ACCOUNTS){
+      state.balances.global.push({
+        account:  Accounts.ACCOUNTS[i].name,
+        currency: Accounts.ACCOUNTS[i].currency,
+        precision:Accounts.ACCOUNTS[i].precision,
+        debits: 0,
+        credits: 0,
+        balance_debit: 0,
+        balance_credit:0,
+        balance: 0
+      })
+    }
+  }
+
+  for(var i=index; i<db.length; i++){
+    var account_debit  = db[i].debit
+    var account_credit = db[i].credit
+    var globalBdebit  = state.balances.global.find( (b)=>{return b.account === account_debit})
+    var globalBcredit = state.balances.global.find( (b)=>{return b.account === account_credit})
+    globalBdebit.debits += db[i].amount
+    globalBcredit.credits += db[i].amount
+  }
+
+  for(var i in state.balances.global){
+    var g = state.balances.global[i]
+    g.balance = g.debits - g.credits
+    if(g.balance >= 0)
+      g.balance_debit  =  g.balance
+    else
+      g.balance_credit = -g.balance
+    //problem with float number: removing 0.0000001 issues
+    var fields = ['debits','credits','balance_debit','balance_credit','balance']
+    for(var f in fields){
+      g[fields[f]] = parseFloat(g[fields[f]].toFixed(g.precision))
+    }
+  }
+}
+
 function insertRecord(record){
   if(db.length == 0){
     db.push(record)
-    return {appended:true}
+    return {appended:true, changed_from: db.length-1}
   }
 
   var dateRecord = new Date(record.date+'Z')
@@ -169,7 +213,7 @@ function insertRecord(record){
 
   if(dateRecord >= dateDB){
     db.push(record)
-    return {appended:true}
+    return {appended:true, changed_from: db.length-1}
   }
 
   var index = db.findIndex( (r)=>{return new Date(r.date+'Z') > dateRecord})
