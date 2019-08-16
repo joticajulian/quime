@@ -31,7 +31,7 @@ const expectedTitles = [
 ]
 
 const titles = [
-  {name: 'date', type: 'date'},
+  {name: 'date_transaction', type: 'date'},
   {name: 'description', type: 'string'},
   {name: 'date_value', type: 'date'},
   {name: 'amount', type: 'number'},
@@ -69,6 +69,7 @@ function parseRecord(data) {
     record[titles[i].name] = value
   }
   var account = Accounts.estimateAccount(record)
+  record.date = new Date(record.date_transaction+'Z').getTime()
   if(record.amount >= 0){
     record.debit = account.debit
     record.credit = account.credit
@@ -151,7 +152,7 @@ async function processNewFiles() {
       log(`New file processed: ${filename}`)
       log(`${records.length} records added`)
       if(!appended){
-        log(`There are records in the past. Balances and reports recalculated from date ${new Date(db[changed_from].date+'Z').toISOString().slice(0,-5)}`)
+        log(`There are records in the past. Balances and reports recalculated from date ${new Date(db[changed_from].date).toISOString().slice(0,-5)}`)
       }
       await save()
     }
@@ -208,17 +209,14 @@ function insertRecord(record){
     return {appended:true, changed_from: db.length-1}
   }
 
-  var dateRecord = new Date(record.date+'Z')
-  var dateDB = new Date(db[db.length-1].date+'Z')
-
-  if(dateRecord >= dateDB){
+  if(record.date >= db[db.length-1].date){
     db.push(record)
     return {appended:true, changed_from: db.length-1}
   }
 
-  var index = db.findIndex( (r)=>{return new Date(r.date+'Z') > dateRecord})
+  var index = db.findIndex( (r)=>{return r.date > record.date})
   if(index < 0)
-    throw new Error(`Database error: index = -1, db.length:${db.length}, db date:${new Date(db[db.length-1].date+'Z').toISOString()}, record to insert:${JSON.stringify(record)}`)
+    throw new Error(`Database error: index = -1, db.length:${db.length}, db date:${new Date(db[db.length-1].date).toISOString()}, record to insert:${JSON.stringify(record)}`)
   db.splice(index, 0, record)
   return {appended:false, changed_from:index}
 }
