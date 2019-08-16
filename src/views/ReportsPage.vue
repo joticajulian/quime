@@ -1,4 +1,4 @@
-﻿<template>
+<template>
   <div>
     <div class="container row mt-5">
       <div class="col-md-2">
@@ -22,22 +22,15 @@
       </div>
       <div class="col-md-10">
         <div class="row">
-          <div class="col-6">
-            <h4>Gastos</h4>
+          <div v-for="(balance_group, type, index) in balances_by_type" class="col-6">
+            <h4>{{balance_group.name}}</h4>
             <div class="card mb-4">
               <ul class="list-group list-group-flush">
-                <li v-for="(item,index) in expenses" class="list-group-item">
-                  {{item.account}}
-                </li>
-              </ul>
-            </div>
-          </div>
-          <div class="col-6">
-            <h4>Ingresos</h4>
-            <div class="card mb-4">
-              <ul class="list-group list-group-flush">
-                <li v-for="(item,index) in incomes" class="list-group-item">
-                  {{item.account}}
+                <li v-for="(item,index) in balance_group.balances" class="list-group-item">
+                  <div class="row">
+                    <div class="col-8">{{item.account}}</div>
+                    <div class="col-4 text-right">{{item.balance}}</div>
+                  </div>
                 </li>
               </ul>
             </div>
@@ -74,10 +67,24 @@ export default{
         year: '2019',
         month: '0'
       },
-      assets: [],
-      liabilities: [],
-      incomes: [],
-      expenses: [],
+      balances_by_type: {
+        incomes: {
+          name: 'Ingresos',
+          balances: [],
+        },
+        expenses: {
+          name: 'Gastos',
+          balances: [],
+        },
+        assets: {
+          name: 'Activos',
+          balances: [],
+        },
+        liabilities: {
+          name: 'Pasivos',
+          balances: [],
+        },        
+      }
     }
   },
   watch: {
@@ -100,29 +107,20 @@ export default{
       var n = parseInt(this.selection.year) - 2018
       var m = parseInt(this.selection.month)
       var index = n*12 + m +1
-      
-      this.incomes = []
-      this.expenses = []
-      this.assets = []
-      this.liabilities = []
+
+      var plural = (type)=>{
+        if(type === 'liability') return 'liabilities'
+        return type + 's'
+      }
+
+      for(var name in this.balances_by_type)
+        this.balances_by_type[name].balances = []
+
       for(var i in state.balances_by_period[index].accounts){
         var balance = state.balances_by_period[index].accounts[i]
-        switch(balance.account_type){
-          case 'asset':
-            this.assets.push(balance)
-            break
-          case 'liability':
-            this.liabilities.push(balance)
-            break
-          case 'income':
-            this.incomes.push(balance)
-            break
-          case 'expense':
-            this.expenses.push(balance)
-            break
-          default:
-            throw new Error(`Cannot recognize account type '${balance.account_type}'`)
-        }
+        if(balance.balance == 0) continue
+        var type = plural(balance.account_type)
+        this.balances_by_type[type].balances.push(balance)
       }
     },
   }
