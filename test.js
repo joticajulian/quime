@@ -196,6 +196,7 @@ function recalculateBalances(index){
       for(var j in Accounts.ACCOUNTS){      
         state.balances_by_period[i].accounts.push({
           account:  Accounts.ACCOUNTS[j].name,
+          account_type: Accounts.ACCOUNTS[j].type,
           currency: Accounts.ACCOUNTS[j].currency,
           precision:Accounts.ACCOUNTS[j].precision,
           debits: 0,
