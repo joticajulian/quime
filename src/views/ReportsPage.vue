@@ -29,7 +29,7 @@
                 <li v-for="(item,index) in balance_group.balances" class="list-group-item">
                   <div class="row">
                     <div class="col-8">{{item.account}}</div>
-                    <div class="col-4 text-right">{{item.balance}}</div>
+                    <div class="col-4 text-right" :class="{'text-success':item.green, 'text-danger':!item.green}">{{item.balance_show}}</div>
                   </div>
                 </li>
               </ul>
@@ -117,10 +117,27 @@ export default{
         this.balances_by_type[name].balances = []
 
       for(var i in state.balances_by_period[index].accounts){
-        var balance = state.balances_by_period[index].accounts[i]
-        if(balance.balance == 0) continue
-        var type = plural(balance.account_type)
-        this.balances_by_type[type].balances.push(balance)
+        var b = state.balances_by_period[index].accounts[i]
+        if(b.balance == 0) continue
+        switch(b.account_type){
+          case 'asset':
+            b.green = b.balance >= 0
+            b.balance_show = b.balance
+            break
+          case 'expense':
+            b.green = b.balance < 0
+            b.balance_show = -b.balance
+            break
+          case 'liability':
+          case 'income':
+            b.green = b.balance < 0
+            b.balance_show = -b.balance
+            break
+          default:
+            break
+        }
+        var type = plural(b.account_type)
+        this.balances_by_type[type].balances.push(b)
       }
     },
   }
