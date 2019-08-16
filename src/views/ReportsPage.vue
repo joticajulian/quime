@@ -22,14 +22,30 @@
       </div>
       <div class="col-md-10">
         <div class="row">
-          <div v-for="(balance_group, type, index) in balances_by_type" class="col-6">
+          <div v-for="(balance_group, type, index1) in balances_by_type" :key="index1" class="col-6">
             <h4>{{balance_group.name}}</h4>
             <div class="card mb-4">
               <ul class="list-group list-group-flush">
-                <li v-for="(item,index) in balance_group.balances" class="list-group-item">
+                <li v-for="(item,index2) in balance_group.balances" :key="index2" class="list-group-item" @click="selectAccount(type,index2)">
                   <div class="row">
                     <div class="col-8">{{item.account}}</div>
                     <div class="col-4 text-right" :class="{'text-success':item.green, 'text-danger':!item.green}">{{item.balance_show}}</div>
+                  </div>
+                </li>
+              </ul>
+            </div>
+          </div>
+          <div class="col-12 mt-3">
+            <h4>{{current_account}}</h4>
+            <div class="card mb-4">
+              <ul class="list-group list-group-flush">
+                <li v-for="(item, index) in current_balance" class="list-group-item">
+                  <div class="row">
+                    <div class="col-2">{{item.date_transaction}}</div>
+                    <div class="col-4">{{item.description}}</div>
+                    <div class="col-2 text-success">{{item.debit}}</div>
+                    <div class="col-2 text-danger">{{item.credit}}</div>
+                    <div class="col-2">{{item.amount}}</div>
                   </div>
                 </li>
               </ul>
@@ -67,6 +83,8 @@ export default{
         year: '2019',
         month: '0'
       },
+      current_account: 'No account selected',
+      current_balance: [],
       balances_by_type: {
         incomes: {
           name: 'Ingresos',
@@ -84,7 +102,7 @@ export default{
           name: 'Pasivos',
           balances: [],
         },        
-      }
+      },
     }
   },
   watch: {
@@ -100,9 +118,35 @@ export default{
     }
   },
   created(){
-    console.log(state)
+    db.forEach( (r)=>{ r.date_transaction = r.date_transaction.replace('T00:00:00','') })
   },
   methods: {
+    selectAccount(type, index){
+      console.log(type)
+      console.log(index)
+      this.current_account = this.balances_by_type[type].balances[index].account
+      var getPeriod = (year1, month1, year2, month2) => {
+        var start = new Date(year1,month1).getTime()
+
+        if(!year2 || !month2){ year2=year1; month2=month1; }
+        month2++
+        if(month2 > 11){ month2=0; year2++ }
+
+        var end = new Date(year2,month2).getTime() - 1000
+        return { 
+          start, 
+          end,
+          start_date: new Date(start).toISOString().slice(0,-5),
+          end_date: new Date(end).toISOString().slice(0,-5)
+        }
+      }
+      var period = getPeriod( this.selection.year , this.selection.month )
+      this.current_balance = db.filter( (r)=>{
+        return r.date >= period.start && r.date <= period.end &&
+          (r.debit  === this.current_account ||
+           r.credit === this.current_account)
+      })
+    },
     loadReport(){
       var n = parseInt(this.selection.year) - 2018
       var m = parseInt(this.selection.month)
