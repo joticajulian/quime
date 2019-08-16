@@ -96,6 +96,7 @@ async function processNewFiles() {
     if(names[i].substring(names[i].length-3) === 'csv')
       csv_filenames.push( names[i] )
 
+  var changed_from = -1
   for(var f in csv_filenames){
     var filename = csv_filenames[f]
 
@@ -136,7 +137,6 @@ async function processNewFiles() {
       })
 
       var appended = true
-      var changed_from = -1
       for(var i in records){
         var result = insertRecord(records[i])
         if(!result.appended){
@@ -147,8 +147,6 @@ async function processNewFiles() {
         }
       }
 
-      if(changed_from >= 0) recalculateBalances(changed_from)
-
       log(`New file processed: ${filename}`)
       log(`${records.length} records added`)
       if(!appended){
@@ -157,48 +155,92 @@ async function processNewFiles() {
       await save()
     }
   }
+  return changed_from
 }
 
 function recalculateBalances(index){
-  if(!state.balances){
-    state.balances = {
-      global: []
-    }
+  index = 0 //the actual code is only functional for append, not modify existing balance, then calculation from the beggining is needed.
 
-    for(var i in Accounts.ACCOUNTS){
-      state.balances.global.push({
-        account:  Accounts.ACCOUNTS[i].name,
-        currency: Accounts.ACCOUNTS[i].currency,
-        precision:Accounts.ACCOUNTS[i].precision,
-        debits: 0,
-        credits: 0,
-        balance_debit: 0,
-        balance_credit:0,
-        balance: 0
-      })
+  var getPeriod = (year1, month1, year2, month2) => {
+    var start = new Date(year1,month1).getTime()
+
+    if(!year2 || !month2){ year2=year1; month2=month1; }
+    month2++
+    if(month2 > 11){ month2=0; year2++ }
+
+    var end = new Date(year2,month2).getTime() - 1000
+    return { 
+      start, 
+      end,
+      start_date: new Date(start).toISOString().slice(0,-5),
+      end_date: new Date(end).toISOString().slice(0,-5)
+    }
+  }
+ 
+  if(true){ //if(!state.balances_by_period){
+    state.balances_by_period = []
+
+    var years = 4
+    for(var i=0; i< years*12+1; i++){
+      state.balances_by_period[i] = {}
+
+      if(i == 0) //global balance
+        state.balances_by_period[i].period = getPeriod(2000,0,2037,11) //from jan 2000 to dec 2037
+      else{
+        var year = 2018 + Math.floor((i-1)/12)
+        var month = (i-1)%12
+        state.balances_by_period[i].period = getPeriod(year, month)
+      }
+
+      state.balances_by_period[i].accounts = []
+      for(var j in Accounts.ACCOUNTS){      
+        state.balances_by_period[i].accounts.push({
+          account:  Accounts.ACCOUNTS[j].name,
+          currency: Accounts.ACCOUNTS[j].currency,
+          precision:Accounts.ACCOUNTS[j].precision,
+          debits: 0,
+          credits: 0,
+          balance_debit: 0,
+          balance_credit:0,
+          balance: 0
+        })
+      }
     }
   }
 
-  for(var i=index; i<db.length; i++){
-    var account_debit  = db[i].debit
-    var account_credit = db[i].credit
-    var globalBdebit  = state.balances.global.find( (b)=>{return b.account === account_debit})
-    var globalBcredit = state.balances.global.find( (b)=>{return b.account === account_credit})
-    globalBdebit.debits += db[i].amount
-    globalBcredit.credits += db[i].amount
-  }
+  for(var i in state.balances_by_period){
+    for(var j=index; j<db.length; j++){
+      var record = db[j]
+      if(record.date < state.balances_by_period[i].period.start ||
+         record.date > state.balances_by_period[i].period.end
+      )
+        continue
 
-  for(var i in state.balances.global){
-    var g = state.balances.global[i]
-    g.balance = g.debits - g.credits
-    if(g.balance >= 0)
-      g.balance_debit  =  g.balance
-    else
-      g.balance_credit = -g.balance
-    //problem with float number: removing 0.0000001 issues
-    var fields = ['debits','credits','balance_debit','balance_credit','balance']
-    for(var f in fields){
-      g[fields[f]] = parseFloat(g[fields[f]].toFixed(g.precision))
+      var account_debit  = record.debit
+      var account_credit = record.credit
+
+      var balanceAccountDebit  = state.balances_by_period[i].accounts.find( (b)=>{return b.account === account_debit})
+      var balanceAccountCredit = state.balances_by_period[i].accounts.find( (b)=>{return b.account === account_credit})
+      balanceAccountDebit.debits += record.amount
+      balanceAccountCredit.credits += record.amount
+    }
+
+    for(var j in state.balances_by_period[i].accounts){
+      var a = state.balances_by_period[i].accounts[j]
+      a.balance = a.debits - a.credits
+      if(a.balance >= 0) a.balance_debit = a.balance
+      else a.balance_credit = -a.balance
+
+      //problem with float number: removing 0.0000001 issues
+      var fields = ['debits','credits','balance_debit','balance_credit','balance']
+      for(var f in fields){
+        try{
+        a[fields[f]] = parseFloat(a[fields[f]].toFixed(a.precision))
+        }catch(error){
+          console.log(`Error in period ${j}: balance account 1: ${JSON.stringify(a)}`)
+          throw error
+        }
+      }
     }
   }
 }
@@ -221,9 +263,12 @@ function insertRecord(record){
   return {appended:false, changed_from:index}
 }
 
-async function save(){
-  await writeFile(config.DB_FILENAME, JSON.stringify(db))
-  await writeFile(config.STATE_FILENAME, JSON.stringify(state))
+async function save(files){
+  if(!files) files = ['db','state']
+  for(var i in files){
+    if( files[i]==='db'    ) await writeFile(config.DB_FILENAME, JSON.stringify(db))
+    if( files[i]==='state' ) await writeFile(config.STATE_FILENAME, JSON.stringify(state))
+  }
 }
 
 async function main() {
@@ -241,11 +286,9 @@ async function main() {
   db = JSON.parse(db)
   state = JSON.parse(state)
 
-  await processNewFiles()
-  /*db.forEach( (r)=>{
-    console.log(r.description)
-    console.log(r.msg1)
-  })*/
+  var changed_from = await processNewFiles()
+  recalculateBalances(0)
+  await save(['state'])
 }
 
 main()
