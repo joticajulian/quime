@@ -48,6 +48,18 @@ const titles = [
   {name: 'city_to', type: 'string'},
 ]
 
+/**
+ * Function to determine if 2 records have the same data
+ */
+function equalRecord(a,b){
+  for(var i in titles){
+    if(titles[i].name === 'balance') continue
+    if(a[titles[i].name] !== b[titles[i].name])
+      return false
+  }
+  return true
+}
+
 function parseRecord(data) {
   var record = {}
   for(var i in titles){
@@ -135,20 +147,40 @@ async function processNewFiles() {
         file: filename,
         time: now()
       })
+      records = countDuplicates(records)
+      var total_records = records.reduce( (t,r)=>{ return t + 1 + r.repeated}, 0)
+      var dateRange = getDateRange(records)
+      var dbFiltered = db.filter( (r)=>{ return r.date >= dateRange.start && r.date <= dateRange.end})
+
+      // Loop to remove from "records" the records that are already in the database "db"
+      var repeated = 0
+      dbFiltered.forEach( (r)=>{
+        var index_found = records.findIndex( (re)=>{ return equalRecord(re, r) })
+        if(index_found >= 0){
+          records[index_found].repeated--
+          if(records[index_found].repeated < 0){
+            var removed = records.splice(index_found, 1)
+            repeated++
+          }
+        }
+      })
 
       var appended = true
       for(var i in records){
-        var result = insertRecord(records[i])
-        if(!result.appended){
-          appended = false
-        }
-        if(result.changed_from < changed_from || changed_from == -1){
-          changed_from = result.changed_from
+        for(var j=0; j<records[i].repeated+1; j++){ //repeated=0: write once. repeated=1: write two times. repeated=2. write the record three times.
+          var result = insertRecord(records[i])
+          if(!result.appended){
+            appended = false
+          }
+          if(result.changed_from < changed_from || changed_from == -1){
+            changed_from = result.changed_from
+          }
         }
       }
 
+      total_records = records.reduce( (t,r)=>{ return t + 1 + r.repeated}, 0)
       log(`New file processed: ${filename}`)
-      log(`${records.length} records added`)
+      log(`${total_records} records added (repeated: ${repeated})`)
       if(!appended){
         log(`There are records in the past. Balances and reports recalculated from date ${new Date(db[changed_from].date).toISOString().slice(0,-5)}`)
       }
@@ -156,6 +188,43 @@ async function processNewFiles() {
     }
   }
   return changed_from
+}
+
+/**
+ * Function to count if there are duplication of records
+ * Returns the list of records with an additional field (repeated) that contains the number of repetitions
+ */
+function countDuplicates(a){
+  var b = []
+  while( a.length > 0 ){
+    var item = a.splice(0,1)
+    item = item[0]
+    item.repeated = 0
+    var index_repeated = 0
+    while(true){
+      var index_repeated = a.findIndex( (r)=>{ return equalRecord(r, item) })
+      if(index_repeated>=0){
+        item.repeated++
+        a.splice(index_repeated, 1)
+      }else{
+        break
+      }
+    }
+    b.push(item)
+  }
+  return b
+}
+
+function getDateRange(data){
+  if(data.length == 0)
+    return {start: null, end: null}
+  var start = data[0].date
+  var end = data[0].date
+  for(var i=1; i<data.length; i++){
+    if(data[i].date < start) start = data[i].date
+    if(data[i].date > end)   end   = data[i].date
+  }
+  return {start, end}
 }
 
 function recalculateBalances(index){
@@ -238,7 +307,7 @@ function recalculateBalances(index){
         try{
         a[fields[f]] = parseFloat(a[fields[f]].toFixed(a.precision))
         }catch(error){
-          console.log(`Error in period ${j}: balance account 1: ${JSON.stringify(a)}`)
+          log(`Error in period ${j}: balance account 1: ${JSON.stringify(a)}`)
           throw error
         }
       }
@@ -246,7 +315,9 @@ function recalculateBalances(index){
   }
 }
 
-function insertRecord(record){
+function insertRecord(_record){
+  var record = JSON.parse(JSON.stringify(_record))
+  delete record.repeated
   if(db.length == 0){
     db.push(record)
     return {appended:true, changed_from: db.length-1}
