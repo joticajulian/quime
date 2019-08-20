@@ -1,5 +1,11 @@
 const fs = require('fs')
 const util = require('util')
+const express = require('express')
+const cookieSession = require('cookie-session')
+const bodyParser = requiere('body-parser')
+const passport = require('passport')
+require('dotenv').config()
+
 const config = require('./config')
 const Accounts = require('./accounts')
 const Spuerkeess = require('./spuerkeess')
@@ -12,6 +18,69 @@ var state = {}
 
 const now = ()=>{ return new Date().toISOString().slice(0,-5) }
 const log = (text)=>{ console.log(now() + ' - ' + text) }
+
+const app = express()
+const LocalStrategy = require('passport-local').Strategy
+const port = process.env.PORT || 3000
+
+app.all('*', function(req, res, next) {
+  res.header('Access-Control-Allow-Origin','*')
+  res.header('Access-Control-Allow-Headers','X-Requested-With')
+  next()
+})
+
+app.use(express.static(config.PUBLIC_ROOT)
+app.use(bodyParser.json())
+app.use(cookieSession({
+  name: 'mysession',
+  keys: ['randomkey'],
+  maxAge: 24*60*60*1000 //24 hours
+}))
+app.use(passport.initialize())
+app.use(passport.session())
+
+app.get('/', (req, res, next) => {
+  res.sendFile('index.html', {root: config.PUBLIC_ROOT})
+})
+
+app.post('/api/login', (req, res, next)=>{
+  log('Trying to Login')
+  passport.authenticate('local', (err, user, info)=>{
+    if(err) return next(err)
+    if(!user) return res.status(400).send([user, 'Cannot log in', info])
+    req.login(user, (err)=>{ res.send('Logged in') })
+  })(req, res, next)
+})
+
+app.get('/api/logout'), (req, res)=>{
+  req.logout()
+  log('logout')
+  return res.send()
+})
+
+const authMiddleware = async (req, res, next) => {
+  if(!req.isAuthenticated()){
+    log('Not authenticated')
+    res.status(401).send('You are not authenticated')
+  }else{
+    return next()
+  }
+}
+
+passport.use(new LocalStrategy({
+    usernameField: 'username',
+    passwordField: 'password'    
+  },
+  (username, password, done) => {
+    (()=>{
+      var user = {username, password}
+      if(username === config.USERNAME && password === config.PASSWORD)
+         done(null, user)
+      else
+         done(null, false, {message: 'Incorrect username or password'})
+    })()
+  }
+))
 
 function fileProcessed(filename){
   if(!state || !state.processed_files || state.processed_files.length == 0) return false
