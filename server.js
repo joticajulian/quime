@@ -55,6 +55,7 @@ async function processNewFiles() {
       console.log(`${records.length} records found`)
       var extra_empty = records.length % STICKERS_PER_PAGE
       for(var i=0; i< extra_empty; i++) records.push({name:'', address:''})
+      //writeFile(`records.json`, JSON.stringify(records))
 
       var svgdata = fs.readFileSync('stickers.svg', 'utf8')
       var j=0
@@ -65,7 +66,7 @@ async function processNewFiles() {
         aux_svg = aux_svg.replace('{{name}}',recipient.name)
         aux_svg = aux_svg.replace('{{address}}',recipient.address)
         if(j==STICKERS_PER_PAGE-1){
-          j=0
+          j=-1
           filenumber++
           console.log(`Writing file${filenumber}.svg`)
           writeFile(`results/file${filenumber}.svg`, aux_svg)
