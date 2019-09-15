@@ -1,8 +1,9 @@
 node_modules/
+dist/
 *.csv
-config.js
 accounts.js
 
 db.json
 state.json
 
+.env
