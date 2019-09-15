@@ -1,5 +1,6 @@
 <template>
   <div>
+    <AppHeader/>
     <div class="container row mt-5">
       <div class="col-md-2">
         <div class="form-group row">
@@ -58,8 +59,11 @@
 </template>
 
 <script>
-import state from '@/../state.json'
-import db from '@/../db.json'
+//import state from '@/../state.json'
+//import db from '@/../db.json'
+import axios from 'axios'
+import AppHeader from '@/components/AppHeader'
+import Config from '@/config'
 
 export default{
   name: 'ReportsPage',
@@ -103,7 +107,12 @@ export default{
           balances: [],
         },        
       },
+      db: [],
+      state: {},
     }
+  },
+  components: {
+    AppHeader
   },
   watch: {
     'selection.year': function(){
@@ -118,7 +127,15 @@ export default{
     }
   },
   created(){
-    db.forEach( (r)=>{ r.date_transaction = r.date_transaction.replace('T00:00:00','') })
+    var load = async ()=>{
+      var result = await axios.get(Config.SERVER + 'db.json')
+      this.db = result.data
+      console.log('db obtained')
+      result = await axios.get(Config.SERVER + 'state.json')
+      this.state = result.data
+      this.db.forEach( (r)=>{ r.date_transaction = r.date_transaction.replace('T00:00:00','') })
+    }
+    load()
   },
   methods: {
     selectAccount(type, index){
@@ -141,7 +158,7 @@ export default{
         }
       }
       var period = getPeriod( this.selection.year , this.selection.month )
-      this.current_balance = db.filter( (r)=>{
+      this.current_balance = this.db.filter( (r)=>{
         return r.date >= period.start && r.date <= period.end &&
           (r.debit  === this.current_account ||
            r.credit === this.current_account)
@@ -160,8 +177,8 @@ export default{
       for(var name in this.balances_by_type)
         this.balances_by_type[name].balances = []
 
-      for(var i in state.balances_by_period[index].accounts){
-        var b = state.balances_by_period[index].accounts[i]
+      for(var i in this.state.balances_by_period[index].accounts){
+        var b = this.state.balances_by_period[index].accounts[i]
         if(b.balance == 0) continue
         switch(b.account_type){
           case 'asset':
