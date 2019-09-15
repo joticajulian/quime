@@ -2,7 +2,7 @@ const fs = require('fs')
 const util = require('util')
 const express = require('express')
 const cookieSession = require('cookie-session')
-const bodyParser = requiere('body-parser')
+const bodyParser = require('body-parser')
 const passport = require('passport')
 require('dotenv').config()
 
@@ -25,11 +25,12 @@ const port = process.env.PORT || 3000
 
 app.all('*', function(req, res, next) {
   res.header('Access-Control-Allow-Origin','*')
-  res.header('Access-Control-Allow-Headers','X-Requested-With')
+  res.header('Access-Control-Allow-Headers','X-Requested-With, Content-type,Accept,X-Access-Token,X-Key')
+  res.header('Access-Control-Allow-Origin', '*')
   next()
 })
 
-app.use(express.static(config.PUBLIC_ROOT)
+app.use(express.static(config.PUBLIC_ROOT))
 app.use(bodyParser.json())
 app.use(cookieSession({
   name: 'mysession',
@@ -52,7 +53,7 @@ app.post('/api/login', (req, res, next)=>{
   })(req, res, next)
 })
 
-app.get('/api/logout'), (req, res)=>{
+app.get('/api/logout', (req, res)=>{
   req.logout()
   log('logout')
   return res.send()
@@ -66,6 +67,20 @@ const authMiddleware = async (req, res, next) => {
     return next()
   }
 }
+
+app.post('/api/update', authMiddleware, (req, res, next)=>{
+  log('Trying to Update')
+})
+
+app.get('/db.json', authMiddleware, (req, res, next)=>{
+  log('db.json request')
+  res.sendFile('db.json', {root: config.PRIVATE_ROOT})
+})
+
+app.get('/state.json', authMiddleware, (req, res, next)=>{
+  log('state.json request')
+  res.sendFile('state.json', {root: config.PRIVATE_ROOT})
+})
 
 passport.use(new LocalStrategy({
     usernameField: 'username',
@@ -81,6 +96,24 @@ passport.use(new LocalStrategy({
     })()
   }
 ))
+
+passport.serializeUser((user, done) => {
+  done(null, user.username)
+})
+
+passport.deserializeUser((username, done) => {
+  if(username === config.USERNAME){
+    console.log('deserializeUser');
+    done(null, {username: config.USERNAME, password: config.PASSWORD})
+  }else{
+    console.log('Error user')
+    done(null, null)
+  }
+})
+
+app.listen(port, () => {
+  console.log("Server quime listening on port "+port)
+})
 
 function fileProcessed(filename){
   if(!state || !state.processed_files || state.processed_files.length == 0) return false
@@ -357,4 +390,4 @@ async function main() {
   recalculateBalances(0)
 }
 
-main()
+//main()
