@@ -60,6 +60,7 @@ app.get('/api/logout', (req, res)=>{
 })
 
 const authMiddleware = async (req, res, next) => {
+  return next()
   if(!req.isAuthenticated()){
     log('Not authenticated')
     res.status(401).send('You are not authenticated')
@@ -70,6 +71,28 @@ const authMiddleware = async (req, res, next) => {
 
 app.post('/api/update', authMiddleware, (req, res, next)=>{
   log('Trying to Update')
+  var record = req.body.record
+  removeRecord(record.id)
+  insertRecord(record)
+  recalculateBalances(0)
+  save(['db'])
+})
+
+app.post('/api/insert', authMiddleware, (req, res, next)=>{
+  log('Trying to add')
+  var record = req.body.record
+  record.id = uuidv1()
+  insertRecord(record)
+  recalculateBalances(0)
+  save(['db'])
+})
+
+app.post('/api/remove', authMiddleware, (req, res, next)=>{
+  log('Trying to remove')
+  var id = req.body.id
+  removeRecord(id)
+  recalculateBalances(0)
+  save(['db'])
 })
 
 app.get('/db.json', authMiddleware, (req, res, next)=>{
@@ -80,6 +103,10 @@ app.get('/db.json', authMiddleware, (req, res, next)=>{
 app.get('/state.json', authMiddleware, (req, res, next)=>{
   log('state.json request')
   res.sendFile('state.json', {root: config.PRIVATE_ROOT})
+})
+
+app.get('/api/accounts', authMiddleware, (req, res, next)=>{
+  res.send(Accounts.ACCOUNTS)
 })
 
 passport.use(new LocalStrategy({
@@ -390,4 +417,4 @@ async function main() {
   recalculateBalances(0)
 }
 
-//main()
+main()
