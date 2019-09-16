@@ -5,6 +5,7 @@
  */
 
 const fs = require('fs')
+const uuidv1 = require('uuid/v1')
 const Accounts = require('./accounts')
 
 const expectedTitles = [
@@ -64,7 +65,7 @@ function equalRecord(a,b){
 }
 
 function parseRecord(data) {
-  var record = {}
+  var record = {id:uuidv1()}
   for(var i in titles){
     switch(titles[i].type){
       case 'string':
