@@ -1,5 +1,34 @@
 <template>
   <div>
+    <b-modal ref="modalEditRecord" hide-footer :title="modalTitle">
+      <div class="row">
+        <label class="label-form-control col-3">Fecha</label>
+        <input class="form-control" v-model="modalRecord.date" type="text"/>
+      </div>
+      <div class="row">
+        <label class="label-form-control col-3">Descripcion</label>
+        <input class="form-control" v-model="modalRecord.description" type="text"/>
+      </div>
+      <div class="row">
+        <label class="label-form-control col-3">Debito</label>
+        <select class="form-control" v-model="modalRecord.debit">
+          <option v-for="(acc, index) in accounts">{{acc.name}}</option>
+        </select>
+      </div>
+      <div class="row">
+        <label class="label-form-control col-3">Credito</label>
+        <select class="form-control" v-model="modalRecord.credit">
+          <option v-for="(acc, index) in accounts">{{acc.name}}</option>
+        </select>
+      </div>
+      <div class="row">
+        <label class="label-form-control col-3">Cantidad</label>
+        <input class="form-control" v-model="modalRecord.amount" type="text"/>
+      </div>
+      <button class="btn btn-primary" @click="updateRecord">Update</button>
+    </b-modal>
+
+
     <AppHeader/>
     <div class="container row mt-5">
       <div class="col-md-2">
@@ -40,7 +69,7 @@
             <h4>{{current_account}}</h4>
             <div class="card mb-4">
               <ul class="list-group list-group-flush">
-                <li v-for="(item, index) in current_balance" class="list-group-item">
+                <li v-for="(item, index) in current_balance" :key="index" class="list-group-item" @click="openModalUpdate(item, index)">
                   <div class="row">
                     <div class="col-2">{{item.date_transaction}}</div>
                     <div class="col-4">{{item.description}}</div>
@@ -109,6 +138,15 @@ export default{
       },
       db: [],
       state: {},
+      accounts: [],
+      modalTitle: 'Modificar',
+      modalRecord: {
+        date: '',
+        description: '',
+        debit: '',
+        credit: '',
+        amount: '',
+      }
     }
   },
   components: {
@@ -133,11 +171,17 @@ export default{
       console.log('db obtained')
       result = await axios.get(Config.SERVER + 'state.json')
       this.state = result.data
+      result = await axios.get(Config.SERVER_API + 'accounts')
+      this.accounts = result.data
+      console.log(this.accounts)
       this.db.forEach( (r)=>{ r.date_transaction = r.date_transaction.replace('T00:00:00','') })
     }
     load()
   },
   methods: {
+    openModalUpdate(item, index){
+      this.$refs.modalEditRecord.show()
+    },
     selectAccount(type, index){
       console.log(type)
       console.log(index)
