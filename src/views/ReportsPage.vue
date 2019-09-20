@@ -1,30 +1,25 @@
 <template>
   <div>
     <b-modal ref="modalEditRecord" hide-footer :title="modalTitle">
-      <div class="row">
-        <label class="label-form-control col-3">Fecha</label>
-        <input class="form-control" v-model="modalRecord.date" type="text"/>
-      </div>
-      <div class="row">
-        <label class="label-form-control col-3">Descripcion</label>
-        <input class="form-control" v-model="modalRecord.description" type="text"/>
-      </div>
-      <div class="row">
-        <label class="label-form-control col-3">Debito</label>
-        <select class="form-control" v-model="modalRecord.debit">
-          <option v-for="(acc, index) in accounts">{{acc.name}}</option>
-        </select>
-      </div>
-      <div class="row">
-        <label class="label-form-control col-3">Credito</label>
-        <select class="form-control" v-model="modalRecord.credit">
-          <option v-for="(acc, index) in accounts">{{acc.name}}</option>
-        </select>
-      </div>
-      <div class="row">
-        <label class="label-form-control col-3">Cantidad</label>
-        <input class="form-control" v-model="modalRecord.amount" type="text"/>
-      </div>
+      <label class="label-form-control col-3">Fecha</label>
+      <input class="form-control" v-model="modalRecord.date" type="text"/>
+
+      <label class="label-form-control col-3">Descripcion</label>
+      <input class="form-control" v-model="modalRecord.description" type="text"/>
+
+      <label class="label-form-control col-3">Debito</label>
+      <select class="form-control" v-model="modalRecord.debit">
+        <option v-for="(acc, index) in accounts">{{acc.name}}</option>
+      </select>
+
+      <label class="label-form-control col-3">Credito</label>
+      <select class="form-control" v-model="modalRecord.credit">
+        <option v-for="(acc, index) in accounts">{{acc.name}}</option>
+      </select>
+
+      <label class="label-form-control col-3">Cantidad</label>
+      <input class="form-control" v-model="modalRecord.amount" type="text"/>
+
       <button class="btn btn-primary" @click="updateRecord">Update</button>
     </b-modal>
 
@@ -82,7 +77,10 @@
             </div>
           </div>
         </div>
-      </div>
+        <div v-if="alert.info" class="alert alert-info" role="alert">{{alert.infoText}}</div>
+        <div v-if="alert.success" class="alert alert-success" role="alert" v-html="alert.successText"></div>
+        <div v-if="alert.danger"  class="alert alert-danger" role="alert">{{alert.dangerText}}</div>
+        </div>
     </div>
   </div>
 </template>
@@ -93,6 +91,7 @@
 import axios from 'axios'
 import AppHeader from '@/components/AppHeader'
 import Config from '@/config'
+import Alerts from '@/mixins/Alerts'
 
 export default{
   name: 'ReportsPage',
@@ -152,6 +151,9 @@ export default{
   components: {
     AppHeader
   },
+  mixins:[
+    Alerts
+  ],
   watch: {
     'selection.year': function(){
       console.log(this.selection.year)
@@ -165,7 +167,10 @@ export default{
     }
   },
   created(){
-    var load = async ()=>{
+    this.load()
+  },
+  methods: {
+    async load(){
       var result = await axios.get(Config.SERVER + 'db.json')
       this.db = result.data
       console.log('db obtained')
@@ -175,13 +180,46 @@ export default{
       this.accounts = result.data
       console.log(this.accounts)
       this.db.forEach( (r)=>{ r.date_transaction = r.date_transaction.replace('T00:00:00','') })
-    }
-    load()
-  },
-  methods: {
+    },
+
     openModalUpdate(item, index){
       this.$refs.modalEditRecord.show()
+      this.modalRecord = {
+        id:   item.id,
+        date: item.date_transaction,
+        description: item.description,
+        debit: item.debit,
+        credit: item.credit,
+        amount: item.amount
+      }
     },
+
+    async updateRecord(){
+      this.hideSuccess()
+      this.hideDanger()
+      var date = new Date(this.modalRecord.date+'Z').getTime()
+      var data = {
+        record: {
+          id:   this.modalRecord.id,
+          date: date,
+          date_transaction: new Date(date).toISOString().slice(0,-5),
+          description: this.modalRecord.description,
+          debit: this.modalRecord.debit,
+          credit: this.modalRecord.credit,
+          amount: parseFloat(this.modalRecord.amount)
+        }
+      }
+      try{
+        var result = await axios.post('/api/update', data)
+        this.showSuccess('Record updated')
+        this.$refs.modalEditRecord.hide()
+        this.load()
+      }catch(error){
+        this.showDanger(error.message)
+        throw error
+      }
+    },
+
     selectAccount(type, index){
       console.log(type)
       console.log(index)
