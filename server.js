@@ -4,6 +4,7 @@ const express = require('express')
 const cookieSession = require('cookie-session')
 const bodyParser = require('body-parser')
 const passport = require('passport')
+const uuidv1 = require('uuidv1')
 require('dotenv').config()
 
 const config = require('./config')
@@ -72,10 +73,13 @@ const authMiddleware = async (req, res, next) => {
 app.post('/api/update', authMiddleware, (req, res, next)=>{
   log('Trying to Update')
   var record = req.body.record
-  removeRecord(record.id)
-  insertRecord(record)
+  var id = req.body.record.id
+  removeRecord(id)
+  insertRecord(record, id)
   recalculateBalances(0)
   save(['db'])
+  res.send('updated')
+  console.log('updated')
 })
 
 app.post('/api/insert', authMiddleware, (req, res, next)=>{
@@ -85,6 +89,8 @@ app.post('/api/insert', authMiddleware, (req, res, next)=>{
   insertRecord(record)
   recalculateBalances(0)
   save(['db'])
+  res.send('inserted')
+  console.log('inserted')
 })
 
 app.post('/api/remove', authMiddleware, (req, res, next)=>{
@@ -93,6 +99,8 @@ app.post('/api/remove', authMiddleware, (req, res, next)=>{
   removeRecord(id)
   recalculateBalances(0)
   save(['db'])
+  res.send('removed')
+  console.log('removed')
 })
 
 app.get('/db.json', authMiddleware, (req, res, next)=>{
@@ -130,7 +138,6 @@ passport.serializeUser((user, done) => {
 
 passport.deserializeUser((username, done) => {
   if(username === config.USERNAME){
-    console.log('deserializeUser');
     done(null, {username: config.USERNAME, password: config.PASSWORD})
   }else{
     console.log('Error user')
@@ -232,8 +239,12 @@ async function processNewFiles() {
   return changed_from
 }
 
-function insertRecord(_record){
+function insertRecord(_record, id){
   var record = JSON.parse(JSON.stringify(_record))
+
+  if(id) record.id = id
+  else   record.id = uuidv1()
+
   delete record.repeated
   if(db.length == 0){
     db.push(record)
@@ -250,6 +261,13 @@ function insertRecord(_record){
     throw new Error(`Database error: index = -1, db.length:${db.length}, db date:${new Date(db[db.length-1].date).toISOString()}, record to insert:${JSON.stringify(record)}`)
   db.splice(index, 0, record)
   return {appended:false, changed_from:index}
+}
+
+function removeRecord(id){
+  var index = db.findIndex( (r)=>{return r.id === id})
+  if(index < 0) throw new Error('Bad index')
+  db.splice(index, 1)
+  return index
 }
 
 /**
@@ -311,7 +329,7 @@ function fixFloatNumbers(accountBalance, period){
     try{
       accountBalance[field] = parseFloat(accountBalance[field].toFixed(accountBalance.precision))
     }catch(error){
-      log(`Error in period ${period}: balance account: ${JSON.stringify(a)}`)
+      log(`Error in period ${period}: balance account: ${JSON.stringify(accountBalance[field])}`)
       throw error
     }
   }
