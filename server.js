@@ -103,6 +103,17 @@ app.post('/api/remove', authMiddleware, (req, res, next)=>{
   console.log('removed')
 })
 
+app.get('/api/run_parser', authMiddleware, async (req, res, next)=>{
+  try{
+    log('run parser')
+    await quime_parser()
+    res.send('ok')
+  }catch(error){
+    log(error.message)
+    res.status(404).send(error.message)
+  }
+})
+
 app.get('/db.json', authMiddleware, (req, res, next)=>{
   log('db.json request')
   res.sendFile('db.json', {root: config.PRIVATE_ROOT})
@@ -416,7 +427,7 @@ function save(files){
   }
 }
 
-async function main() {
+async function quime_parser() {
   if( !fs.existsSync(config.DB_FILENAME) ){
     log(`Database ${config.DB_FILENAME} does not exists. Creating a new file`)
     await writeFile(config.DB_FILENAME, '[]')
@@ -435,4 +446,3 @@ async function main() {
   recalculateBalances(0)
 }
 
-main()
