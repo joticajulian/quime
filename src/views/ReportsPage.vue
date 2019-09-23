@@ -77,6 +77,7 @@
             </div>
           </div>
         </div>
+        <button class="btn btn-primary" @click="runParser">Leer extractos bancarios</button>
         <div v-if="alert.info" class="alert alert-info" role="alert">{{alert.infoText}}</div>
         <div v-if="alert.success" class="alert alert-success" role="alert" v-html="alert.successText"></div>
         <div v-if="alert.danger"  class="alert alert-danger" role="alert">{{alert.dangerText}}</div>
@@ -213,6 +214,19 @@ export default{
         var result = await axios.post('/api/update', data)
         this.showSuccess('Record updated')
         this.$refs.modalEditRecord.hide()
+        this.load()
+      }catch(error){
+        this.showDanger(error.message)
+        throw error
+      }
+    },
+
+    async runParser(){
+      this.hideSuccess()
+      this.hideDanger()
+      try{
+        var result = await axios.get('/api/run_parser')
+        this.showSuccess('Datos leidos')
         this.load()
       }catch(error){
         this.showDanger(error.message)
