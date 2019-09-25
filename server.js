@@ -87,7 +87,6 @@ app.post('/api/update', authMiddleware, (req, res, next)=>{
 app.post('/api/insert', authMiddleware, (req, res, next)=>{
   log('Trying to add')
   var record = req.body.record
-  record.id = uuidv1()
   insertRecord(record)
   recalculateBalances(0)
   save(['db'])
