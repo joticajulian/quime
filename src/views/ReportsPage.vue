@@ -20,7 +20,14 @@
       <label class="label-form-control col-3">Cantidad</label>
       <input class="form-control" v-model="modalRecord.amount" type="text"/>
 
-      <button class="btn btn-primary" @click="updateRecord">Update</button>
+      <div class="row mt-4">
+        <div class="col-6">
+          <button class="btn btn-primary" @click="updateRecord">{{modalType}}</button>
+        </div>
+        <div class="col-6 text-right">
+          <button class="btn btn-danger" @click="removeRecord">Remove</button>
+        </div>
+      </div>
     </b-modal>
 
 
@@ -77,7 +84,8 @@
             </div>
           </div>
         </div>
-        <button class="btn btn-primary" @click="runParser">Leer extractos bancarios</button>
+        <button class="btn btn-primary mt-3 mb-3 mr-3" @click="openModalUpdate(null, 0, 'insert')">Insert</button>
+        <button class="btn btn-primary mt-3 mb-3" @click="runParser">Leer extractos bancarios</button>
         <div v-if="alert.info" class="alert alert-info" role="alert">{{alert.infoText}}</div>
         <div v-if="alert.success" class="alert alert-success" role="alert" v-html="alert.successText"></div>
         <div v-if="alert.danger"  class="alert alert-danger" role="alert">{{alert.dangerText}}</div>
@@ -144,6 +152,7 @@ export default{
       state: {},
       accounts: [],
       modalTitle: 'Modificar',
+      modalType: 'update',
       modalRecord: {
         date: '',
         description: '',
@@ -166,10 +175,12 @@ export default{
     'selection.year': function(){
       console.log(this.selection.year)
       this.loadReport()
+      this.selectAccount('expenses',0)
     },
     'selection.month': function(){
       console.log(this.months[this.selection.month])
       this.loadReport()
+      this.selectAccount('expenses',0)
     }
   },
 
@@ -186,13 +197,29 @@ export default{
       this.state = result.data
       result = await axios.get(Config.SERVER_API + 'accounts')
       this.accounts = result.data
-      console.log(this.accounts)
       this.db.forEach( (r)=>{ r.date_transaction = r.date_transaction.replace('T00:00:00','') })
       this.loadReport()
       this.selectAccount( this.current_selection.type, this.current_selection.index )
     },
 
-    openModalUpdate(item, index){
+    openModalUpdate(item, index, operation='update'){
+      this.modalType = operation
+      if(operation === 'insert'){
+        this.modalTitle = 'Nuevo registro'
+        item = {
+          id: null,
+          date_transaction: new Date().toISOString().slice(0,-14),
+          description: '',
+          debit: '',
+          credit: '',
+          amount: 0
+        }
+      }else if(operation === 'update'){
+        this.modalTitle = 'Modificar'
+      }else{
+        throw new Error(`The operation '${operation}}' is not valid`)
+      }
+
       this.$refs.modalEditRecord.show()
       this.modalRecord = {
         id:   item.id,
@@ -207,10 +234,9 @@ export default{
     async updateRecord(){
       this.hideSuccess()
       this.hideDanger()
-      var date = new Date(this.modalRecord.date+'Z').getTime()
+      var date = new Date(this.modalRecord.date+'T00:00:00Z').getTime()
       var data = {
         record: {
-          id:   this.modalRecord.id,
           date: date,
           date_transaction: new Date(date).toISOString().slice(0,-5),
           description: this.modalRecord.description,
@@ -219,8 +245,9 @@ export default{
           amount: parseFloat(this.modalRecord.amount)
         }
       }
+      if(this.modalType === 'update') data.record.id = this.modalRecord.id
       try{
-        var result = await axios.post('/api/update', data)
+        var result = await axios.post(Config.SERVER_API + this.modalType, data)
         this.showSuccess('Record updated')
         this.$refs.modalEditRecord.hide()
         this.load()
@@ -230,11 +257,26 @@ export default{
       }
     },
 
+    async removeRecord(){
+      if(this.modalType === 'insert') return
+      if(this.modalType === 'update'){
+        try{
+          var result = await axios.post(Config.SERVER_API + 'remove', { id: this.modalRecord.id })
+          this.showSuccess('Record removed')
+          this.$refs.modalEditRecord.hide()
+          this.load()
+        }catch(error){
+          this.showDanger(error.message)
+          throw error
+        }
+      }
+    },
+
     async runParser(){
       this.hideSuccess()
       this.hideDanger()
       try{
-        var result = await axios.get('/api/run_parser')
+        var result = await axios.get(Config.SERVER_API + 'run_parser')
         this.showSuccess('Datos leidos')
         this.load()
       }catch(error){
@@ -244,8 +286,7 @@ export default{
     },
 
     selectAccount(type, index){
-      console.log(type)
-      console.log(index)
+      this.current_balance = []
       this.current_selection = { type, index }
       this.current_account = this.balances_by_type[type].balances[index].account
       var getPeriod = (year1, month1, year2, month2) => {
