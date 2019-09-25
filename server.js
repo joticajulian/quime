@@ -24,6 +24,8 @@ const app = express()
 const LocalStrategy = require('passport-local').Strategy
 const port = process.env.PORT || 3000
 
+loadDB()
+
 app.all('*', function(req, res, next) {
   res.header('Access-Control-Allow-Origin','*')
   res.header('Access-Control-Allow-Headers','X-Requested-With, Content-type,Accept,X-Access-Token,X-Key')
@@ -275,8 +277,9 @@ function insertRecord(_record, id){
 }
 
 function removeRecord(id){
+  log(`db size: ${db.length}`)
   var index = db.findIndex( (r)=>{return r.id === id})
-  if(index < 0) throw new Error('Bad index')
+  if(index < 0) throw new Error(`Bad index ${id}`)
   db.splice(index, 1)
   return index
 }
@@ -427,7 +430,7 @@ function save(files){
   }
 }
 
-async function quime_parser() {
+async function loadDB() {
   if( !fs.existsSync(config.DB_FILENAME) ){
     log(`Database ${config.DB_FILENAME} does not exists. Creating a new file`)
     await writeFile(config.DB_FILENAME, '[]')
@@ -441,7 +444,10 @@ async function quime_parser() {
 
   db = JSON.parse(db)
   state = JSON.parse(state)
+}
 
+async function quime_parser() {
+  await loadDB()
   var changed_from = await processNewFiles()
   recalculateBalances(0)
 }
