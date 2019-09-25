@@ -118,6 +118,10 @@ export default{
       },
       current_account: 'No account selected',
       current_balance: [],
+      current_selection: {
+        type: 'expenses',
+        index: 0
+      },
       balances_by_type: {
         incomes: {
           name: 'Ingresos',
@@ -149,27 +153,30 @@ export default{
       }
     }
   },
+
   components: {
     AppHeader
   },
+
   mixins:[
     Alerts
   ],
+
   watch: {
     'selection.year': function(){
       console.log(this.selection.year)
-      this.loadReport( n*12 + m + 1 )
+      this.loadReport()
     },
     'selection.month': function(){
       console.log(this.months[this.selection.month])
-      var n = this.selection.year - 2018
-      var m = this.selection.month
-      this.loadReport( n*12 + m + 1 )
+      this.loadReport()
     }
   },
+
   created(){
     this.load()
   },
+
   methods: {
     async load(){
       var result = await axios.get(Config.SERVER + 'db.json')
@@ -181,6 +188,8 @@ export default{
       this.accounts = result.data
       console.log(this.accounts)
       this.db.forEach( (r)=>{ r.date_transaction = r.date_transaction.replace('T00:00:00','') })
+      this.loadReport()
+      this.selectAccount( this.current_selection.type, this.current_selection.index )
     },
 
     openModalUpdate(item, index){
@@ -237,6 +246,7 @@ export default{
     selectAccount(type, index){
       console.log(type)
       console.log(index)
+      this.current_selection = { type, index }
       this.current_account = this.balances_by_type[type].balances[index].account
       var getPeriod = (year1, month1, year2, month2) => {
         var start = new Date(year1,month1).getTime()
@@ -260,6 +270,7 @@ export default{
            r.credit === this.current_account)
       })
     },
+
     loadReport(){
       var n = parseInt(this.selection.year) - 2018
       var m = parseInt(this.selection.month)
