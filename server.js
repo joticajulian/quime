@@ -1,7 +1,7 @@
 const fs = require('fs')
 const util = require('util')
 
-const STICKERS_PER_PAGE = 29
+const STICKERS_PER_PAGE = 20
 
 const writeFile = util.promisify(fs.writeFile)
 const readdir = util.promisify(fs.readdir)
@@ -11,6 +11,7 @@ async function getNewFilesCSV(){
   var csv_filenames = []
   for(var i in names){
     var filename = names[i]
+    if(filename === 'clientes.csv' || filename === 'clientes2.csv' || filename === 'cambios.csv' || filename === 'borrados.csv') continue
     if(filename.substring(filename.length-3) === 'csv')
       csv_filenames.push( filename )
   }
@@ -26,6 +27,7 @@ function switchCalleCra(address){
 }
 
 function getCity(address, index, changed = false){
+  throw new Error('function deprecated')
   var manual_change = [
     
   ]
@@ -47,12 +49,12 @@ function getCity(address, index, changed = false){
   var calle = null
   
   var manual_review = [
-    {line:230, city:'Enea'},
+    /*{line:230, city:'Enea'},
     {line:2140, city:'Manizales'},
     {line:2419, city:'Manizales'},
     {line:2663, city:'Enea'},
     {line:2759, city:'Manizales'},
-    {line:3410, city:'Manizales'},
+    {line:3410, city:'Manizales'},*/
   ]
   
   
@@ -163,12 +165,27 @@ function getCity(address, index, changed = false){
 
 function parseRecord(data, index) {
   if(data.length < 3) return null
-  var expected_city = data[3].trim().toLowerCase()
-  var result = getCity(data[2], index)
-  var city = result.city
-  var address = result.address
-  if(index <= 2464 && expected_city !== city){
-    //console.log(`mismatch ${index}: calculated: '${city}', expected: '${expected_city}' ... ${data[2]}`)
+  if(false){ //determine city
+    var expected_city = data[3].trim().toLowerCase()
+    var result = getCity(data[2], index)
+    var city = result.city
+    var address = result.address
+    if(index <= 2464 && expected_city !== city){
+      //console.log(`mismatch ${index}: calculated: '${city}', expected: '${expected_city}' ... ${data[2]}`)
+    }
+  }else{
+    var address = data[2]
+    var city = data[3]
+    if(data[1].includes('Ã‘')){
+      //console.log('CHANGE...')
+      //console.log(data)
+      data[1] = data[1].replace(/Ã‘/g,'Ñ')      
+    }
+    if(data[1].includes('ã‘')){
+      //console.log('CHANGE...')
+      //console.log(data)
+      data[1] = data[1].replace(/ã‘/g,'ñ')      
+    }
   }
   return {
     number: data[0],
@@ -225,8 +242,7 @@ function readCSV(filename) {
 
 function createStickersSVG(records){
   var extra_empty = records.length % STICKERS_PER_PAGE
-  for(var i=0; i< extra_empty; i++) records.push({name:'', address:''})
-  //writeFile(`records.json`, JSON.stringify(records))
+  for(var i=0; i< extra_empty; i++) records.push({name:'', address:'', city:''})
 
   var svgdata = fs.readFileSync('stickers.svg', 'utf8')
   var j=0
@@ -236,12 +252,14 @@ function createStickersSVG(records){
     if(j==0) var aux_svg = svgdata.slice(0)
     aux_svg = aux_svg.replace('{{name}}',recipient.name)
     aux_svg = aux_svg.replace('{{address}}',recipient.address)
+    aux_svg = aux_svg.replace('{{city}}',recipient.city)
     if(j==STICKERS_PER_PAGE-1){
       j=-1
       filenumber++
+      aux_svg = aux_svg.replace('{{page}}',filenumber)
       console.log(`Writing file${filenumber}.svg`)
       writeFile(`results/file${filenumber}.svg`, aux_svg)
-      if(filenumber==3) break
+      //if(filenumber==100) break
     }
     j++
   }
@@ -250,22 +268,103 @@ function createStickersSVG(records){
 async function processNewFiles() {
   var csv_filenames = await getNewFilesCSV()
 
+  var result = {
+    records: [],
+    removed: [],
+    changed: []
+  }
   for(var f in csv_filenames){
     var filename = csv_filenames[f]
 
     try{
-      var result = readCSV(filename)
-      console.log(`${result.records.length} records found`)
-      writeFile('clientes.csv', JSONtoCSV(result.records))
-      writeFile('cambios.csv', JSONtoCSV(result.changed))
-      writeFile('borrados.csv', JSONtoCSV(result.removed))
-      //createStickersSVG(records)
+      var file_result = readCSV(filename)
+      file_result.records.forEach( (r)=>{ result.records.push(r) })
+      file_result.removed.forEach( (r)=>{ result.removed.push(r) })
+      file_result.changed.forEach( (r)=>{ result.changed.push(r) })
+      console.log(`${file_result.records.length} records found`)
       console.log(`${filename} processed`)
     }catch(error){
       console.log(error)
       continue
     }
   }
+  console.log(`TOTAL: ${result.records.length} records`)
+  console.log('Saving files clientes, cambios, and borrados .csv')
+  writeFile('clientes.csv', JSONtoCSV(result.records))
+  writeFile('cambios.csv', JSONtoCSV(result.changed))
+  writeFile('borrados.csv', JSONtoCSV(result.removed))
+  console.log('Sorting by city')
+  console.log(getCalleCarrera('CALLE 104B # 29 - 40'))
+  result.records.sort( (a,b)=>{
+    if(a.city > b.city) return 1
+    if(a.city < b.city) return -1
+    var addA = getCalleCarrera(a.address)
+    var addB = getCalleCarrera(b.address)
+    if(!addB) return 1
+    if(!addA) return -1
+    if(addA.calle > addB.calle) return 1
+    if(addA.calle < addB.calle) return -1
+    if(addA.carrera > addB.carrera) return 1
+    if(addA.carrera < addB.carrera) return -1
+    return 0
+  })
+  writeFile('clientes2.csv', JSONtoCSV(result.records))
+  
+  console.log('Creating stickers')
+  createStickersSVG(result.records) 
+}
+
+function getCalleCarrera(a) {
+  a = a.toLowerCase()
+  if(a.includes('cra') || a.includes('carrera') || a.includes('kra') || a.includes('cr ')){
+    var i = a.indexOf('cra')
+    var t = 3
+    if(i<0){
+      i = a.indexOf('carrera')
+      t = 7
+      if(i<0){
+        i = a.indexOf('kra')
+        t = 3
+        if(i<0){
+          i = a.indexOf('cr ')
+          t = 3
+        }
+      }
+    }
+    var r = new RegExp("\d+")
+    a = a.substring(i+t)
+    var r = /\d+/g;
+    var number;
+    var numbers = []
+    while( (number = r.exec(a)) !== null){
+      numbers.push( parseInt(number) )
+    }
+    if(numbers.length < 3) return null
+    return { carrera: numbers[0], calle: numbers[1] }
+  }
+  if(a.includes('calle') || a.includes('cll') || a.includes('call')){
+    var i = a.indexOf('calle')
+    var t = 5
+    if(i<0){
+      i = a.indexOf('cll')
+      t = 3
+      if(i<0){
+        i = a.indexOf('call')
+        t = 4
+      }
+    }
+    var r = new RegExp("\d+")
+    a = a.substring(i+t)
+    var r = /\d+/g;
+    var number;
+    var numbers = []
+    while( (number = r.exec(a)) !== null){
+      numbers.push( parseInt(number) )
+    }
+    if(numbers.length < 3) return null
+    return { carrera: numbers[1], calle: numbers[0] }
+  }
+  return null
 }
 
 async function main() {
