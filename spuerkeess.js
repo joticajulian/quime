@@ -48,7 +48,7 @@ function verifyTitles(fields) {
   for(var j in fields){
     fields[j] = fields[j].replace(/[^a-zA-Z0-9 ]/g, "")
     if( fields[j] !== expectedTitles[j] )
-      throw new Error(`The title '${fields[j]}' should be equal to '${expectedTitles[j]}'. Filename: '${filename}'`)
+      throw new Error(`The title '${fields[j]}' should be equal to '${expectedTitles[j]}'`)
   }
 }
 
