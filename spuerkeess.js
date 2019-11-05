@@ -114,7 +114,7 @@ function readCSV(filename) {
       var record = parseRecord(fields)
       records.push(record)
     }catch(error){
-      log(`Error in file '${filename}', line ${i}`)
+      console.log(`Error in file '${filename}', line ${i}`)
       throw error
     }
   }
