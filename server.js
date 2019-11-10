@@ -1,4 +1,5 @@
-#!/usr/bin/env node /** server.js  */
+#!/usr/bin/env node
+
 const fs = require('fs')
 const util = require('util')
 const express = require('express')
