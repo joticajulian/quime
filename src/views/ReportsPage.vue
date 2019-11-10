@@ -64,6 +64,12 @@
                     <div class="col-4 text-right" :class="{'text-success':item.green, 'text-danger':!item.green}">{{item.balance_show}}</div>
                   </div>
                 </li>
+                <li class="list-group-item">
+                  <div class="row">
+                    <div class="col-8"><strong>Total</strong></div>
+                    <div class="col-4 text-right" :class="{'text-success':balance_group.total_green, 'text-danger':!balance_group.total_green}"><strong>{{balance_group.total.toFixed(2)}}</strong></div>
+                  </div>
+                </li>
               </ul>
             </div>
           </div>
@@ -134,18 +140,26 @@ export default{
         incomes: {
           name: 'Ingresos',
           balances: [],
+          total: 0,
+          total_green: true,
         },
         expenses: {
           name: 'Gastos',
           balances: [],
+          total: 0,
+          total_green: false,
         },
         assets: {
           name: 'Activos',
           balances: [],
+          total: 0,
+          total_green: true,
         },
         liabilities: {
           name: 'Pasivos',
           balances: [],
+          total: 0,
+          total_green: false,
         },        
       },
       db: [],
@@ -322,30 +336,40 @@ export default{
         return type + 's'
       }
 
-      for(var name in this.balances_by_type)
+      for(var name in this.balances_by_type){
         this.balances_by_type[name].balances = []
+        this.balances_by_type[name].total = 0
+      }
 
+      var total = 0
+      var total_green = true
       for(var i in this.state.balances_by_period[index].accounts){
         var b = this.state.balances_by_period[index].accounts[i]
         if(b.balance == 0) continue
+        var type = plural(b.account_type)
         switch(b.account_type){
           case 'asset':
             b.green = b.balance >= 0
             b.balance_show = b.balance
+            this.balances_by_type[type].total += b.balance_show
+            this.balances_by_type[type].total_green = this.balances_by_type[type].total >= 0
             break
           case 'expense':
             b.green = b.balance < 0
             b.balance_show = -b.balance
+            this.balances_by_type[type].total += b.balance_show
+            this.balances_by_type[type].total_green = this.balances_by_type[type].total >= 0
             break
           case 'liability':
           case 'income':
             b.green = b.balance < 0
             b.balance_show = -b.balance
+            this.balances_by_type[type].total += b.balance_show
+            this.balances_by_type[type].total_green = this.balances_by_type[type].total >= 0
             break
           default:
             break
         }
-        var type = plural(b.account_type)
         this.balances_by_type[type].balances.push(b)
       }
     },
