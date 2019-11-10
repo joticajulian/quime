@@ -217,10 +217,17 @@ async function processNewFiles() {
     var filename = csv_filenames[f]
 
     try{
-      var records = Spuerkeess.readCSV(filename)      
+      var records = Spuerkeess.readCSV(filename, 1)
     }catch(error){
-      console.log(error)
-      continue
+      console.log('error option 1. '+error.message)
+      console.log('trying option 2')
+      try{
+        var records = Spuerkeess.readCSV(filename, 2)
+      }catch(error){
+        console.log('error option 2. '+error.message)
+        console.log(error)
+        continue
+      }
     }
 
     // remove those that are already in the DB. This function modifies "records"
