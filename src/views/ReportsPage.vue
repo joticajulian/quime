@@ -33,26 +33,18 @@
 
     <AppHeader/>
     <div class="container row mt-5">
-      <div class="col-md-2">
-        <div class="form-group row">
-          <label class="col-4">Año</label>
-          <select class="col-8 mb-2" v-model="selection.year">
-            <option value="2018">2018</option>
-            <option value="2019">2019</option>
-            <option value="2020">2020</option>
-            <option value="2021">2021</option>
-          </select>
-        </div>
-        <div class="form-group row">
-          <label class="col-4">Mes</label>
-          <select class="col-8 mb-3" v-model="selection.month">
-            <option v-for="(month,index) in months" :key="index" :value="index">
-              {{month}}
-            </option>
-          </select>
-        </div>
+      <div class="col-md-3">
+        <ul class="list-group list-group-flush">
+          <li v-for="(item, index) in balances_by_period" :key="index" class="list-group-item" @click="selectPeriod(index)">
+            <div class="row">
+              <div class="col-8">{{item.date}}</div>
+              <div class="col-4"></div>
+            </div>
+          </li>
+        </ul>
       </div>
-      <div class="col-md-10">
+      <div class="col-md-9">
+        <h3 class="text-center">{{months[selection.month]}} {{selection.year}}</h3>
         <div class="row">
           <div v-for="(balance_group, type, index1) in balances_by_type" :key="index1" class="col-6">
             <h4>{{balance_group.name}}</h4>
@@ -163,6 +155,7 @@ export default{
           total_green: false,
         },        
       },
+      balances_by_period: [],
       db: [],
       state: {},
       accounts: [],
@@ -186,19 +179,6 @@ export default{
     Alerts
   ],
 
-  watch: {
-    'selection.year': function(){
-      console.log(this.selection.year)
-      this.loadReport()
-      this.selectAccount('expenses',0)
-    },
-    'selection.month': function(){
-      console.log(this.months[this.selection.month])
-      this.loadReport()
-      this.selectAccount('expenses',0)
-    }
-  },
-
   created(){
     this.load()
   },
@@ -210,6 +190,7 @@ export default{
         this.db = dbDev
         this.state = stateDev
         this.accounts = accountsDev
+        console.log(this.state)
       }else{
         var result = await axios.get(Config.SERVER + 'db.json')
         this.db = result.data
@@ -219,7 +200,8 @@ export default{
         result = await axios.get(Config.SERVER_API + 'accounts')
         this.accounts = result.data
       }
-      this.db.forEach( (r)=>{ r.date_transaction = r.date_transaction.replace('T00:00:00','') })
+      this.db.forEach( (r)=>{ r.date_transaction = r.date_transaction.slice(0,-9) })
+      this.loadPeriods()
       this.loadReport()
       this.selectAccount( this.current_selection.type, this.current_selection.index )
     },
@@ -334,10 +316,18 @@ export default{
       })
     },
 
-    loadReport(){
-      var n = parseInt(this.selection.year) - 2018
-      var m = parseInt(this.selection.month)
-      var index = n*12 + m +1
+    selectPeriod(index){
+      this.selection.month = this.balances_by_period[index].month
+      this.selection.year = this.balances_by_period[index].year
+      this.loadReport(this.balances_by_period[index])
+      this.selectAccount('expenses',0)
+    },
+
+    loadReport(period){
+      if(!period){
+        console.log('No report')
+        return
+      }
 
       var plural = (type)=>{
         if(type === 'liability') return 'liabilities'
@@ -351,8 +341,8 @@ export default{
 
       var total = 0
       var total_green = true
-      for(var i in this.state.balances_by_period[index].accounts){
-        var b = this.state.balances_by_period[index].accounts[i]
+      for(var i in period.accounts){
+        var b = period.accounts[i]
         if(b.balance == 0) continue
         var type = plural(b.account_type)
         switch(b.account_type){
@@ -380,6 +370,26 @@ export default{
         }
         this.balances_by_type[type].balances.push(b)
       }
+    },
+
+    loadPeriods(){
+      this.balances_by_period = []
+      this.state.balances_by_period.forEach((p, index)=>{
+        if(index == 0) return
+        var middle = parseInt((p.period.start + p.period.end)/2)
+        var date = new Date(middle)
+        p.year = date.getFullYear()
+        p.month = date.getMonth()
+        p.date = this.months[p.month] + ' ' + p.year
+        var show = false
+        for(var i in p.accounts){
+          if(p.accounts[i].debits != 0 || p.accounts[i].credits != 0){
+            show = true
+            break
+          }
+        }
+        if(show) this.balances_by_period.push(p)
+      })
     },
   }
 }
