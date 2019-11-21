@@ -1,0 +1,7 @@
+[
+{"date_transaction": "2018-11-14T00:00:00","description": "description 1","amount": 80,"date": 1542153600000,"debit": "Otros gastos","credit": "Bank 1"},
+{"date_transaction": "2018-11-15T00:00:00","description": "description 1","amount": 80,"date": 1542240000000,"debit": "Otros gastos","credit": "Bank 1"},
+{"date_transaction": "2018-12-15T00:00:00","description": "description 1","amount": 80,"date": 1544832000000,"debit": "Otros gastos","credit": "Bank 1"},
+{"date_transaction": "2019-01-15T00:00:00","description": "description 1","amount": 80,"date": 1547510400000,"debit": "Otros gastos","credit": "Bank 1"},
+{"date_transaction": "2019-02-15T00:00:00","description": "description 1","amount": 80,"date": 1550188800000,"debit": "Otros gastos","credit": "Bank 1"}
+]

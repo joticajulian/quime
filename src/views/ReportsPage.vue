@@ -101,8 +101,9 @@
 </template>
 
 <script>
-//import state from '@/../state.json'
-//import db from '@/../db.json'
+import stateDev from '@/assets/stateDev.json'
+import dbDev from '@/assets/dbDev.json'
+import accountsDev from '@/assets/accountsDev.json'
 import axios from 'axios'
 import AppHeader from '@/components/AppHeader'
 import Config from '@/config'
@@ -204,13 +205,20 @@ export default{
 
   methods: {
     async load(){
-      var result = await axios.get(Config.SERVER + 'db.json')
-      this.db = result.data
-      console.log('db obtained')
-      result = await axios.get(Config.SERVER + 'state.json')
-      this.state = result.data
-      result = await axios.get(Config.SERVER_API + 'accounts')
-      this.accounts = result.data
+      if(process.env.NODE_ENV === 'development'){
+        console.log('Development mode')
+        this.db = dbDev
+        this.state = stateDev
+        this.accounts = accountsDev
+      }else{
+        var result = await axios.get(Config.SERVER + 'db.json')
+        this.db = result.data
+        console.log('db obtained')
+        result = await axios.get(Config.SERVER + 'state.json')
+        this.state = result.data
+        result = await axios.get(Config.SERVER_API + 'accounts')
+        this.accounts = result.data
+      }
       this.db.forEach( (r)=>{ r.date_transaction = r.date_transaction.replace('T00:00:00','') })
       this.loadReport()
       this.selectAccount( this.current_selection.type, this.current_selection.index )
