@@ -19,6 +19,8 @@ const readdir = util.promisify(fs.readdir)
 var db = []
 var state = {}
 
+// Accounts.ACCOUNTS = require('./src/assets/accountsDev')
+
 const now = ()=>{ return new Date().toISOString().slice(0,-5) }
 const log = (text)=>{ console.log(now() + ' - ' + text) }
 
@@ -27,6 +29,7 @@ const LocalStrategy = require('passport-local').Strategy
 const port = process.env.PORT || 3000
 
 loadDB()
+.then(()=>{recalculateBalances(0)})
 
 app.all('*', function(req, res, next) {
   res.header('Access-Control-Allow-Origin','*')
