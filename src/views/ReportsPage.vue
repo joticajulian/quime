@@ -71,6 +71,12 @@
             </div>
             <div class="col-12 mt-3">
               <h4>{{current_account}}</h4>
+              <div class="text-right">
+                <select v-model="orderBy">
+                  <option value="date">Ordenar por fecha</option>
+                  <option value="amount">Ordenar por cantidad</option>
+                </select>
+              </div>
               <div class="card mb-4">
                 <ul class="list-group list-group-flush">
                   <li v-for="(item, index) in current_balance" :key="index" class="list-group-item" @click="openModalUpdate(item, index)">
@@ -134,6 +140,7 @@ export default{
         type: 'expenses',
         index: 0
       },
+      orderBy: 'date',
       balances_by_type: {
         incomes: {
           name: 'Ingresos',
@@ -186,6 +193,12 @@ export default{
 
   created(){
     this.load()
+  },
+
+  watch: {
+    orderBy: function(){
+      this.orderCurrentBalance()
+    }
   },
 
   methods: {
@@ -319,11 +332,30 @@ export default{
           (r.debit  === this.current_account ||
            r.credit === this.current_account)
       })
+      this.orderCurrentBalance()
     },
 
     selectPeriod(period){
       this.loadReport(period)
       this.selectAccount('expenses',0)
+    },
+
+    orderCurrentBalance(){
+      if(this.orderBy === 'date'){
+        this.current_balance.sort((a,b)=>{
+          if(a.date > b.date) return 1
+          if(a.date < b.date) return -1
+          return 0
+        })
+      }else if(this.orderBy === 'amount'){
+        this.current_balance.sort((a,b)=>{
+          if(a.amount < b.amount) return 1
+          if(a.amount > b.amount) return -1
+          return 0
+        })
+      }else{
+        console.log('Error')
+      }
     },
 
     loadReport(period){
