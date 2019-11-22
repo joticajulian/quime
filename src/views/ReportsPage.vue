@@ -32,62 +32,67 @@
 
 
     <AppHeader/>
-    <div class="container row mt-5">
-      <div class="col-md-3">
-        <ul class="list-group list-group-flush">
-          <li v-for="(item, index) in balances_by_period" :key="index" class="list-group-item" @click="selectPeriod(index)">
-            <div class="row">
-              <div class="col-8">{{item.date}}</div>
-              <div class="col-4"></div>
+    <div class="container-fluid mt-5">
+      <div class="row">
+        <div class="col-md-3">
+          <ul class="list-group list-group-flush">
+            <li v-for="(item, index) in balances_by_period" :key="index" class="list-group-item" @click="selectPeriod(item)">
+              <div class="row">
+                <div class="col-7">{{item.date}}</div>
+                <div class="col-5">
+                  <div class="text-right" :class="{'text-success':item.balances_by_type.incomes.total_green, 'text-danger':!item.balances_by_type.incomes.total_green}">{{item.balances_by_type.incomes.total.toFixed(2)}}</div>
+                  <div class="text-right" :class="{'text-success':item.balances_by_type.expenses.total_green, 'text-danger':!item.balances_by_type.expenses.total_green}">{{item.balances_by_type.expenses.total.toFixed(2)}}</div>
+                </div>
+              </div>
+            </li>
+          </ul>
+        </div>
+        <div class="col-md-9">
+          <h2 class="text-center">{{months[selection.month]}} {{selection.year}}</h2>
+          <div class="row">
+            <div v-for="(balance_group, type, index1) in balances_by_type" :key="index1" class="col-6">
+              <h4>{{balance_group.name}}</h4>
+              <div class="card mb-4">
+                <ul class="list-group list-group-flush">
+                  <li v-for="(item,index2) in balance_group.balances" :key="index2" class="list-group-item" @click="selectAccount(type,index2)">
+                    <div class="row">
+                      <div class="col-8">{{item.account}}</div>
+                      <div class="col-4 text-right" :class="{'text-success':item.green, 'text-danger':!item.green}">{{item.balance_show}}</div>
+                    </div>
+                  </li>
+                  <li class="list-group-item">
+                    <div class="row">
+                      <div class="col-8"><strong>Total</strong></div>
+                      <div class="col-4 text-right" :class="{'text-success':balance_group.total_green, 'text-danger':!balance_group.total_green}"><strong>{{balance_group.total.toFixed(2)}}</strong></div>
+                    </div>
+                  </li>
+                </ul>
+              </div>
             </div>
-          </li>
-        </ul>
+            <div class="col-12 mt-3">
+              <h4>{{current_account}}</h4>
+              <div class="card mb-4">
+                <ul class="list-group list-group-flush">
+                  <li v-for="(item, index) in current_balance" :key="index" class="list-group-item" @click="openModalUpdate(item, index)">
+                    <div class="row">
+                      <div class="col-2">{{item.date_transaction}}</div>
+                      <div class="col-4">{{item.description}}</div>
+                      <div class="col-2 text-success">{{item.debit}}</div>
+                      <div class="col-2 text-danger">{{item.credit}}</div>
+                      <div class="col-2">{{item.amount}}</div>
+                    </div>
+                  </li>
+                </ul>
+              </div>
+            </div>
+          </div>
+          <button class="btn btn-primary mt-3 mb-3 mr-3" @click="openModalUpdate(null, 0, 'insert')">Insert</button>
+          <button class="btn btn-primary mt-3 mb-3" @click="runParser">Leer extractos bancarios</button>
+          <div v-if="alert.info" class="alert alert-info" role="alert">{{alert.infoText}}</div>
+          <div v-if="alert.success" class="alert alert-success" role="alert" v-html="alert.successText"></div>
+          <div v-if="alert.danger"  class="alert alert-danger" role="alert">{{alert.dangerText}}</div>
+        </div>
       </div>
-      <div class="col-md-9">
-        <h3 class="text-center">{{months[selection.month]}} {{selection.year}}</h3>
-        <div class="row">
-          <div v-for="(balance_group, type, index1) in balances_by_type" :key="index1" class="col-6">
-            <h4>{{balance_group.name}}</h4>
-            <div class="card mb-4">
-              <ul class="list-group list-group-flush">
-                <li v-for="(item,index2) in balance_group.balances" :key="index2" class="list-group-item" @click="selectAccount(type,index2)">
-                  <div class="row">
-                    <div class="col-8">{{item.account}}</div>
-                    <div class="col-4 text-right" :class="{'text-success':item.green, 'text-danger':!item.green}">{{item.balance_show}}</div>
-                  </div>
-                </li>
-                <li class="list-group-item">
-                  <div class="row">
-                    <div class="col-8"><strong>Total</strong></div>
-                    <div class="col-4 text-right" :class="{'text-success':balance_group.total_green, 'text-danger':!balance_group.total_green}"><strong>{{balance_group.total.toFixed(2)}}</strong></div>
-                  </div>
-                </li>
-              </ul>
-            </div>
-          </div>
-          <div class="col-12 mt-3">
-            <h4>{{current_account}}</h4>
-            <div class="card mb-4">
-              <ul class="list-group list-group-flush">
-                <li v-for="(item, index) in current_balance" :key="index" class="list-group-item" @click="openModalUpdate(item, index)">
-                  <div class="row">
-                    <div class="col-2">{{item.date_transaction}}</div>
-                    <div class="col-4">{{item.description}}</div>
-                    <div class="col-2 text-success">{{item.debit}}</div>
-                    <div class="col-2 text-danger">{{item.credit}}</div>
-                    <div class="col-2">{{item.amount}}</div>
-                  </div>
-                </li>
-              </ul>
-            </div>
-          </div>
-        </div>
-        <button class="btn btn-primary mt-3 mb-3 mr-3" @click="openModalUpdate(null, 0, 'insert')">Insert</button>
-        <button class="btn btn-primary mt-3 mb-3" @click="runParser">Leer extractos bancarios</button>
-        <div v-if="alert.info" class="alert alert-info" role="alert">{{alert.infoText}}</div>
-        <div v-if="alert.success" class="alert alert-success" role="alert" v-html="alert.successText"></div>
-        <div v-if="alert.danger"  class="alert alert-danger" role="alert">{{alert.dangerText}}</div>
-        </div>
     </div>
   </div>
 </template>
@@ -202,7 +207,7 @@ export default{
       }
       this.db.forEach( (r)=>{ r.date_transaction = r.date_transaction.slice(0,-9) })
       this.loadPeriods()
-      this.loadReport()
+      this.loadReport(this.balances_by_period[0])
       this.selectAccount( this.current_selection.type, this.current_selection.index )
     },
 
@@ -316,14 +321,18 @@ export default{
       })
     },
 
-    selectPeriod(index){
-      this.selection.month = this.balances_by_period[index].month
-      this.selection.year = this.balances_by_period[index].year
-      this.loadReport(this.balances_by_period[index])
+    selectPeriod(period){
+      this.loadReport(period)
       this.selectAccount('expenses',0)
     },
 
     loadReport(period){
+      this.balances_by_type = this.getBalancesByType(period)
+      this.selection.month = period.month
+      this.selection.year = period.year
+    },
+
+    getBalancesByType(period){
       if(!period){
         console.log('No report')
         return
@@ -334,9 +343,11 @@ export default{
         return type + 's'
       }
 
-      for(var name in this.balances_by_type){
-        this.balances_by_type[name].balances = []
-        this.balances_by_type[name].total = 0
+      var balancesByType = {
+        incomes: { name: 'Ingresos', balances: [], total: 0, total_green: true},
+        expenses: { name: 'Gastos', balances: [], total: 0, total_green: false},
+        assets: { name: 'Activos', balances: [], total: 0, total_green: true},
+        liabilities: { name: 'Pasivos', balances: [], total: 0, total_green: false},        
       }
 
       var total = 0
@@ -349,46 +360,45 @@ export default{
           case 'asset':
             b.green = b.balance >= 0
             b.balance_show = b.balance
-            this.balances_by_type[type].total += b.balance_show
-            this.balances_by_type[type].total_green = this.balances_by_type[type].total >= 0
             break
           case 'expense':
             b.green = b.balance < 0
             b.balance_show = -b.balance
-            this.balances_by_type[type].total += b.balance_show
-            this.balances_by_type[type].total_green = this.balances_by_type[type].total >= 0
             break
           case 'liability':
           case 'income':
             b.green = b.balance < 0
             b.balance_show = -b.balance
-            this.balances_by_type[type].total += b.balance_show
-            this.balances_by_type[type].total_green = this.balances_by_type[type].total >= 0
             break
           default:
             break
         }
-        this.balances_by_type[type].balances.push(b)
+        balancesByType[type].total += b.balance_show
+        balancesByType[type].total_green = balancesByType[type].total >= 0
+        balancesByType[type].balances.push(b)
       }
+      return balancesByType
     },
 
     loadPeriods(){
       this.balances_by_period = []
       this.state.balances_by_period.forEach((p, index)=>{
         if(index == 0) return
-        var middle = parseInt((p.period.start + p.period.end)/2)
-        var date = new Date(middle)
-        p.year = date.getFullYear()
-        p.month = date.getMonth()
-        p.date = this.months[p.month] + ' ' + p.year
         var show = false
         for(var i in p.accounts){
           if(p.accounts[i].debits != 0 || p.accounts[i].credits != 0){
             show = true
-            break
           }
         }
-        if(show) this.balances_by_period.push(p)
+        if(show){
+          var middle = parseInt((p.period.start + p.period.end)/2)
+          var date = new Date(middle)
+          p.year = date.getFullYear()
+          p.month = date.getMonth()
+          p.date = this.months[p.month] + ' ' + p.year
+          p.balances_by_type = this.getBalancesByType(p)
+          this.balances_by_period.splice(0,0,p)
+        }
       })
     },
   }
