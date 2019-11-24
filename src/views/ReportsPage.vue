@@ -386,19 +386,16 @@ export default{
       var total_green = true
       for(var i in period.accounts){
         var b = period.accounts[i]
-        if(b.balance == 0) continue
+        if(b.debits == 0 && b.credits == 0) continue
         var type = plural(b.account_type)
         switch(b.account_type){
           case 'asset':
-            b.green = b.balance >= 0
-            b.balance_show = b.balance
-            break
-          case 'expense':
-            b.green = b.balance < 0
-            b.balance_show = -b.balance
-            break
           case 'liability':
+            b.green = b.acc_balance >= 0
+            b.balance_show = b.acc_balance
+            break
           case 'income':
+          case 'expense':
             b.green = b.balance < 0
             b.balance_show = -b.balance
             break
