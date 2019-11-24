@@ -342,13 +342,14 @@ function newAccountBalance(account){
     credits: 0,
     balance_debit: 0,
     balance_credit:0,
-    balance: 0
+    balance: 0,    // balance of the period
+    acc_balance: 0 // accumulated balance
   }
 }
 
 //problem with float number: removing 0.0000001 issues
 function fixFloatNumbers(accountBalance, period){
-  var fields = ['debits','credits','balance_debit','balance_credit','balance']
+  var fields = ['debits','credits','balance_debit','balance_credit','balance','acc_balance']
   for(var f in fields){
     var field = fields[f]
     try{
@@ -362,7 +363,7 @@ function fixFloatNumbers(accountBalance, period){
 
 
 function recalculateBalances(index){
-  index = 0 //the actual code is only functional for append, not modify existing balance, then calculation from the beggining is needed.
+  index = 0 // TODO: calculate from index
 
   var getPeriod = (year1, month1, year2, month2) => {
     var start = new Date(year1,month1).getTime()
@@ -384,16 +385,12 @@ function recalculateBalances(index){
     state.balances_by_period = []
 
     var years = 4
-    for(var i=0; i< years*12+1; i++){
+    for(var i=0; i< years*12; i++){
       state.balances_by_period[i] = {}
 
-      if(i == 0) //global balance
-        state.balances_by_period[i].period = getPeriod(2000,0,2037,11) //from jan 2000 to dec 2037
-      else{
-        var year = 2018 + Math.floor((i-1)/12)
-        var month = (i-1)%12
-        state.balances_by_period[i].period = getPeriod(year, month)
-      }
+      var year = 2018 + Math.floor((i-1)/12)
+      var month = (i-1)%12
+      state.balances_by_period[i].period = getPeriod(year, month)
 
       state.balances_by_period[i].accounts = []
       for(var j in Accounts.ACCOUNTS){
@@ -423,6 +420,10 @@ function recalculateBalances(index){
     for(var j in state.balances_by_period[i].accounts){
       var a = state.balances_by_period[i].accounts[j]
       a.balance = a.debits - a.credits
+      var lastBalance = 0
+      if(i>0)
+        lastBalance = state.balances_by_period[i-1].accounts[j].acc_balance
+      a.acc_balance = a.balance + lastBalance
       if(a.balance >= 0) a.balance_debit = a.balance
       else a.balance_credit = -a.balance
 
