@@ -55,9 +55,15 @@
               <div class="card mb-4">
                 <ul class="list-group list-group-flush">
                   <li v-for="(item,index2) in balance_group.balances" :key="index2" class="list-group-item" @click="selectAccount(type,index2)">
-                    <div class="row">
+                    <div v-if="type === 'incomes' || type === 'expenses'" class="row">
                       <div class="col-8">{{item.account}}</div>
                       <div class="col-4 text-right" :class="{'text-success':item.green, 'text-danger':!item.green}">{{item.balance_show}}</div>
+                    </div>
+                    <div v-else class="row">
+                      <div class="col-5">{{item.account}}</div>
+                      <div class="col-2 text-right text-success">+{{item.debits}}</div>
+                      <div class="col-2 text-right text-danger" >-{{item.credits}}</div>
+                      <div class="col-3 text-right" :class="{'text-success':item.green, 'text-danger':!item.green}">{{item.balance_show}}</div>
                     </div>
                   </li>
                   <li class="list-group-item">
