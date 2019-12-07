@@ -163,7 +163,7 @@ passport.deserializeUser((username, done) => {
 })
 
 app.listen(port, () => {
-  console.log("Server quime listening on port "+port)
+  console.log("Server quime listening on port: "+port)
 })
 
 function fileProcessed(filename){
@@ -227,10 +227,17 @@ async function processNewFiles() {
       console.log('trying option 2')
       try{
         var records = Spuerkeess.readCSV(filename, 2)
+        console.log("good option 2")
       }catch(error){
         console.log('error option 2. '+error.message)
-        console.log(error)
-        continue
+        console.log('trying option 3')
+        try{
+          var records = Spuerkeess.readCSV(filename, 3)
+        }catch(error){
+          console.log('error option 3. '+error.message)
+          console.log(error)
+          continue
+        }
       }
     }
 
