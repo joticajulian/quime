@@ -392,7 +392,7 @@ export default{
       var total_green = true
       for(var i in period.accounts){
         var b = period.accounts[i]
-        if(b.debits == 0 && b.credits == 0 && b.currency !== 'EUR'
+        if(b.debits == 0 && b.credits == 0
           && (b.account_type === 'income' || b.account_type === 'expense')) continue
         var type = plural(b.account_type)
         switch(b.account_type){
