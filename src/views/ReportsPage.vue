@@ -88,10 +88,11 @@
                   <li v-for="(item, index) in current_balance" :key="index" class="list-group-item" @click="openModalUpdate(item, index)">
                     <div class="row">
                       <div class="col-2">{{item.date_transaction}}</div>
-                      <div class="col-4">{{item.description}}</div>
+                      <div class="col-2">{{item.description}}</div>
                       <div class="col-2 text-success">{{item.debit}}</div>
                       <div class="col-2 text-danger">{{item.credit}}</div>
                       <div class="col-2">{{item.amount}}</div>
+                      <div class="col-2">{{item.acc_balance.toFixed(2)}}</div>
                     </div>
                   </li>
                 </ul>
@@ -333,11 +334,23 @@ export default{
         }
       }
       var period = getPeriod( this.selection.year , this.selection.month )
-      this.current_balance = this.db.filter( (r)=>{
+      var current_balance = this.db.filter( (r)=>{
         return r.date >= period.start && r.date <= period.end &&
           (r.debit  === this.current_account ||
            r.credit === this.current_account)
-      })
+      }).slice()
+      var accumulated = 0
+      if(type === 'assets' || type === 'liabilities')
+        accumulated = this.balances_by_type[type].balances[index].acc_balance - this.balances_by_type[type].balances[index].debits + this.balances_by_type[type].balances[index].credits
+      for(var i in current_balance){
+        var r = current_balance[i]
+        if(r.debit === this.current_account)
+          accumulated += r.amount
+        else
+          accumulated -= r.amount
+        r.acc_balance = accumulated
+      }
+      this.current_balance = current_balance
       this.orderCurrentBalance()
     },
 
