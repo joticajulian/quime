@@ -6,7 +6,7 @@ const express = require('express')
 const cookieSession = require('cookie-session')
 const bodyParser = require('body-parser')
 const passport = require('passport')
-const uuidv1 = require('uuidv1')
+const uuidv1 = require('uuid/v1')
 require('dotenv').config()
 
 const config = require('./config')
