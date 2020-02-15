@@ -8,7 +8,7 @@ const fs = require('fs')
 const uuidv1 = require('uuid/v1')
 const Accounts = require('./accounts')
 
-const expectedTitles = [
+const expectedTitles1 = [
   'Date transaction',
   'Description',
   'Date valeur',
@@ -26,7 +26,7 @@ const expectedTitles = [
   'Localit de la contrepartie'
 ]
 
-const titles = [
+const titles1 = [
   {name: 'date_transaction', type: 'date'},
   {name: 'description', type: 'string'},
   {name: 'date_value', type: 'date'},
@@ -44,11 +44,112 @@ const titles = [
   {name: 'city_to', type: 'string'},
 ]
 
-function verifyTitles(fields) {
+const expectedTitles2 = [
+  'Date transaction',
+  'Description',
+  'Date valeur',
+  'Montant en EUR',
+  'Extrait',
+  'Solde',
+  'Opration',
+  'Solde journalier',
+  'Communication 1',
+  'Communication 2',
+  'Communication 3',
+  'Communication 4',
+  'Compte bnficiaire',
+  'Nom de la contrepartie',
+  'Adresse de la contrepartie',
+  'Localit de la contrepartie'
+]
+
+const titles2 = [
+  {name: 'date_transaction', type: 'date'},
+  {name: 'description', type: 'string'},
+  {name: 'date_value', type: 'date'},
+  {name: 'amount', type: 'number'},
+  {name: 'extrait', type: 'number'},
+  {name: 'balance', type: 'number'},
+  {name: 'operation', type: 'string'},
+  {name: 'balance_day', type: 'number'},
+  {name: 'msg1', type: 'string'},
+  {name: 'msg2', type: 'string'},
+  {name: 'msg3', type: 'string'},
+  {name: 'msg4', type: 'string'},
+  {name: 'account_to', type: 'string'},
+  {name: 'name_to', type: 'string'},
+  {name: 'address_to', type: 'string'},
+  {name: 'city_to', type: 'string'},
+]
+
+const expectedTitles3 = [
+  'Date transaction',
+  'Description',
+  'Date valeur',
+  'Montant en EUR',
+  'Extrait',
+  'Solde journalier',
+  'Opration',
+  'Communication 1',
+  'Communication 2',
+  'Communication 3',
+  'Communication 4',
+  'Compte bnficiaire',
+  'Nom de la contrepartie',
+  'Adresse de la contrepartie',
+  'Localit de la contrepartie'
+]
+
+const titles3 = [
+  {name: 'date_transaction', type: 'date'},
+  {name: 'description', type: 'string'},
+  {name: 'date_value', type: 'date'},
+  {name: 'amount', type: 'number'},
+  {name: 'extrait', type: 'number'},
+  {name: 'balance_day', type: 'number'},
+  {name: 'operation', type: 'string'},
+  {name: 'msg1', type: 'string'},
+  {name: 'msg2', type: 'string'},
+  {name: 'msg3', type: 'string'},
+  {name: 'msg4', type: 'string'},
+  {name: 'account_to', type: 'string'},
+  {name: 'name_to', type: 'string'},
+  {name: 'address_to', type: 'string'},
+  {name: 'city_to', type: 'string'},
+]
+
+
+function verifyTitles(fields, option) {
+  if(!option) option = 1
+  console.log(`number of titles: ${fields.length}`)
+
+  if(option == 1){
+    if(fields.length != expectedTitles1.length)
+      throw new Error(`Number of titles: ${fields.length}. Expected: ${expectedTitles1.length}`)
+  }else if(option == 2){
+    if(fields.length != expectedTitles2.length)
+      throw new Error(`Number of titles: ${fields.length}. Expected: ${expectedTitles2.length}`)
+  }else if(option == 3){
+    if(fields.length != expectedTitles3.length)
+      throw new Error(`Number of titles: ${fields.length}. Expected: ${expectedTitles3.length}`)
+  }else{
+    throw new Error(`The optin ${option} for verify fields does not exist`)
+  }
+
   for(var j in fields){
     fields[j] = fields[j].replace(/[^a-zA-Z0-9 ]/g, "")
-    if( fields[j] !== expectedTitles[j] )
-      throw new Error(`The title '${fields[j]}' should be equal to '${expectedTitles[j]}'. Filename: '${filename}'`)
+    if(option == 1){
+      if( fields[j] !== expectedTitles1[j] )
+        throw new Error(`The title '${fields[j]}' should be equal to '${expectedTitles1[j]}'`)
+    }else if(option == 2){
+      if( fields[j] !== expectedTitles2[j] )
+        throw new Error(`The title '${fields[j]}' should be equal to '${expectedTitles2[j]}'`)
+    }else if(option == 3){
+      if( fields[j] !== expectedTitles3[j] )
+        throw new Error(`The title '${fields[j]}' should be equal to '${expectedTitles3[j]}'`)
+    }else{
+      throw new Error(`The optin ${option} for verify fields does not exist`)
+    }
   }
 }
 
@@ -56,6 +157,19 @@ function verifyTitles(fields) {
  * Function to determine if 2 records have the same data
  */
 function equalRecord(a,b){
+  var titles = titles1
+  for(var i in titles){
+    if(titles[i].name === 'balance') continue
+    if(a[titles[i].name] !== b[titles[i].name])
+      return false
+  }
+  titles = titles2
+  for(var i in titles){
+    if(titles[i].name === 'balance') continue
+    if(a[titles[i].name] !== b[titles[i].name])
+      return false
+  }
+  titles = titles3
   for(var i in titles){
     if(titles[i].name === 'balance') continue
     if(a[titles[i].name] !== b[titles[i].name])
@@ -64,8 +178,11 @@ function equalRecord(a,b){
   return true
 }
 
-function parseRecord(data) {
+function parseRecord(data,option) {
   var record = {id:uuidv1()}
+  var titles = titles1
+  if(option == 2) titles = titles2
+  if(option == 3) titles = titles3
   for(var i in titles){
     switch(titles[i].type){
       case 'string':
@@ -97,24 +214,31 @@ function parseRecord(data) {
   return record
 }
 
-function readCSV(filename) {
+function readCSV(filename, option) {
+  if(!option) option = 1
   var data = fs.readFileSync(filename, 'utf8')
   var lines = data.split('\n')
   var records = []
+  console.log(`number of lines: ${lines.length}`)
   for(var i in lines){
     try{
       var line = lines[i]
       var fields = line.split(';')
-      if(fields.length < expectedTitles.length)
-        continue
       if(i==0){
-        verifyTitles(fields)
+        verifyTitles(fields,option)
+        console.log(`good titles option ${option}`)
         continue
       }
-      var record = parseRecord(fields)
+      if(option == 1 && fields.length < expectedTitles1.length)
+        continue
+      else if(option == 2 && fields.length < expectedTitles2.length)
+        continue
+      else if(option == 3 && fields.length < expectedTitles3.length)
+        continue
+      var record = parseRecord(fields, option)
       records.push(record)
     }catch(error){
-      log(`Error in file '${filename}', line ${i}`)
+      console.log(`Error in file '${filename}', line ${i}`)
       throw error
     }
   }
@@ -122,7 +246,6 @@ function readCSV(filename) {
 }
 
 module.exports = {
-  titles,
   equalRecord,
   readCSV
 }
