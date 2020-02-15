@@ -131,12 +131,14 @@ app.get('/api/run_parser', authMiddleware, async (req, res, next)=>{
 
 app.get('/db.json', authMiddleware, (req, res, next)=>{
   log('db.json request')
-  res.sendFile('db.json', {root: config.PRIVATE_ROOT})
+  //res.sendFile('db.json', {root: config.PRIVATE_ROOT})
+  res.send(db)
 })
 
 app.get('/state.json', authMiddleware, (req, res, next)=>{
   log('state.json request')
-  res.sendFile('state.json', {root: config.PRIVATE_ROOT})
+  //res.sendFile('state.json', {root: config.PRIVATE_ROOT})
+  res.send(state)
 })
 
 app.get('/api/accounts', authMiddleware, (req, res, next)=>{
@@ -349,6 +351,7 @@ function getDateRange(data){
 }
 
 function newAccountBalance(account){
+  if(!account.precision) account.precision = 2
   return {
     account:  account.name,
     account_type: account.type,
@@ -460,7 +463,7 @@ function save(files){
 
     if( files[i]==='state' ){
       // writeFile(config.STATE_FILENAME, JSON.stringify(state))
-      refFirestore.doc('db').set(state)
+      refFirestore.doc('state').set(state)
     }
   }
 }
@@ -479,11 +482,16 @@ async function loadDB() {
 
   db = JSON.parse(db)
   state = JSON.parse(state)*/
+
   try{
     var docState = await refFirestore.doc('state').get();
     var docDB = await refFirestore.doc('db').get();
     if(docState.exists) state = docState.data()
     if(docDB.exists) db = docDB.data().records
+
+    if(!state) state = {}
+    if(!db) db = []
+    console.log(`db tiene ${db.length} records`)
   }catch(error){
     log('Firestore init error')
     console.log(error)
