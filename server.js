@@ -7,6 +7,8 @@ const cookieSession = require('cookie-session')
 const bodyParser = require('body-parser')
 const passport = require('passport')
 const uuidv1 = require('uuid/v1')
+var firebase = require('firebase-admin');
+var firebaseCert = require("./firebase-adminsdk.json");
 require('dotenv').config()
 
 const config = require('./config')
@@ -15,6 +17,13 @@ const Spuerkeess = require('./spuerkeess')
 
 const writeFile = util.promisify(fs.writeFile)
 const readdir = util.promisify(fs.readdir)
+
+firebase.initializeApp({
+  credential: firebase.credential.cert(firebaseCert),
+  databaseURL: "https://quime-fb825.firebaseio.com"
+});
+
+const refFirestore = firebase.firestore().collection('accounting');
 
 var db = []
 var state = {}
@@ -444,13 +453,20 @@ function recalculateBalances(index){
 function save(files){
   if(!files) files = ['db','state']
   for(var i in files){
-    if( files[i]==='db'    ) writeFile(config.DB_FILENAME, JSON.stringify(db))
-    if( files[i]==='state' ) writeFile(config.STATE_FILENAME, JSON.stringify(state))
+    if( files[i]==='db'    ){
+      // writeFile(config.DB_FILENAME, JSON.stringify(db))
+      refFirestore.doc('db').set(db)
+    }
+
+    if( files[i]==='state' ){
+      // writeFile(config.STATE_FILENAME, JSON.stringify(state))
+      refFirestore.doc('db').set(state)
+    }
   }
 }
 
 async function loadDB() {
-  if( !fs.existsSync(config.DB_FILENAME) ){
+  /*if( !fs.existsSync(config.DB_FILENAME) ){
     log(`Database ${config.DB_FILENAME} does not exists. Creating a new file`)
     await writeFile(config.DB_FILENAME, '[]')
   }
@@ -462,7 +478,16 @@ async function loadDB() {
   state = fs.readFileSync(config.STATE_FILENAME, 'utf-8')
 
   db = JSON.parse(db)
-  state = JSON.parse(state)
+  state = JSON.parse(state)*/
+  try{
+    var docState = await refFirestore.doc('state').get();
+    var docDB = await refFirestore.doc('db').get();
+    if(docState.exists) state = docState.data()
+    if(docDB.exists) db = docDB.data()
+  }catch(error){
+    log('Firestore init error')
+    console.log(error)
+  }
 }
 
 async function quime_parser() {
