@@ -455,7 +455,7 @@ function save(files){
   for(var i in files){
     if( files[i]==='db'    ){
       // writeFile(config.DB_FILENAME, JSON.stringify(db))
-      refFirestore.doc('db').set(db)
+      refFirestore.doc('db').set({records: db})
     }
 
     if( files[i]==='state' ){
@@ -483,7 +483,7 @@ async function loadDB() {
     var docState = await refFirestore.doc('state').get();
     var docDB = await refFirestore.doc('db').get();
     if(docState.exists) state = docState.data()
-    if(docDB.exists) db = docDB.data()
+    if(docDB.exists) db = docDB.data().records
   }catch(error){
     log('Firestore init error')
     console.log(error)
