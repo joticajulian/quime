@@ -4,11 +4,11 @@
       <h1>Quime</h1>
       <div class="row">
         <label class="label-form-control col-md-2">Username</label>
-        <input class="form-control col-md-10" type="text" v-model="username"/>
+        <input class="form-control col-md-10" type="text" v-model="username" @keyup.enter="login"/>
       </div>
       <div class="row">
         <label class="label-form-control col-md-2">Password</label>
-        <input class="form-control col-md-10" type="password" v-model="password"/>
+        <input class="form-control col-md-10" type="password" v-model="password" @keyup.enter="login"/>
       </div>
       <button class="btn btn-primary mt-3 mb-3" @click="login">login</button>
       <div v-if="alert.danger"  class="alert alert-danger" role="alert">{{alert.dangerText}}</div>

@@ -1,3 +1,5 @@
+#!/usr/bin/env node
+
 const fs = require('fs')
 const util = require('util')
 const express = require('express')
@@ -17,12 +19,17 @@ const readdir = util.promisify(fs.readdir)
 var db = []
 var state = {}
 
+// Accounts.ACCOUNTS = require('./src/assets/accountsDev')
+
 const now = ()=>{ return new Date().toISOString().slice(0,-5) }
 const log = (text)=>{ console.log(now() + ' - ' + text) }
 
 const app = express()
 const LocalStrategy = require('passport-local').Strategy
 const port = process.env.PORT || 3000
+
+loadDB()
+.then(()=>{recalculateBalances(0)})
 
 app.all('*', function(req, res, next) {
   res.header('Access-Control-Allow-Origin','*')
@@ -85,7 +92,6 @@ app.post('/api/update', authMiddleware, (req, res, next)=>{
 app.post('/api/insert', authMiddleware, (req, res, next)=>{
   log('Trying to add')
   var record = req.body.record
-  record.id = uuidv1()
   insertRecord(record)
   recalculateBalances(0)
   save(['db'])
@@ -101,6 +107,17 @@ app.post('/api/remove', authMiddleware, (req, res, next)=>{
   save(['db'])
   res.send('removed')
   console.log('removed')
+})
+
+app.get('/api/run_parser', authMiddleware, async (req, res, next)=>{
+  try{
+    log('run parser')
+    await quime_parser()
+    res.send('ok')
+  }catch(error){
+    log(error.message)
+    res.status(404).send(error.message)
+  }
 })
 
 app.get('/db.json', authMiddleware, (req, res, next)=>{
@@ -146,7 +163,7 @@ passport.deserializeUser((username, done) => {
 })
 
 app.listen(port, () => {
-  console.log("Server quime listening on port "+port)
+  console.log("Server quime listening on port: "+port)
 })
 
 function fileProcessed(filename){
@@ -204,10 +221,24 @@ async function processNewFiles() {
     var filename = csv_filenames[f]
 
     try{
-      var records = Spuerkeess.readCSV(filename)      
+      var records = Spuerkeess.readCSV(filename, 1)
     }catch(error){
-      console.log(error)
-      continue
+      console.log('error option 1. '+error.message)
+      console.log('trying option 2')
+      try{
+        var records = Spuerkeess.readCSV(filename, 2)
+        console.log("good option 2")
+      }catch(error){
+        console.log('error option 2. '+error.message)
+        console.log('trying option 3')
+        try{
+          var records = Spuerkeess.readCSV(filename, 3)
+        }catch(error){
+          console.log('error option 3. '+error.message)
+          console.log(error)
+          continue
+        }
+      }
     }
 
     // remove those that are already in the DB. This function modifies "records"
@@ -264,8 +295,9 @@ function insertRecord(_record, id){
 }
 
 function removeRecord(id){
+  log(`db size: ${db.length}`)
   var index = db.findIndex( (r)=>{return r.id === id})
-  if(index < 0) throw new Error('Bad index')
+  if(index < 0) throw new Error(`Bad index ${id}`)
   db.splice(index, 1)
   return index
 }
@@ -317,13 +349,14 @@ function newAccountBalance(account){
     credits: 0,
     balance_debit: 0,
     balance_credit:0,
-    balance: 0
+    balance: 0,    // balance of the period
+    acc_balance: 0 // accumulated balance
   }
 }
 
 //problem with float number: removing 0.0000001 issues
 function fixFloatNumbers(accountBalance, period){
-  var fields = ['debits','credits','balance_debit','balance_credit','balance']
+  var fields = ['debits','credits','balance_debit','balance_credit','balance','acc_balance']
   for(var f in fields){
     var field = fields[f]
     try{
@@ -337,7 +370,7 @@ function fixFloatNumbers(accountBalance, period){
 
 
 function recalculateBalances(index){
-  index = 0 //the actual code is only functional for append, not modify existing balance, then calculation from the beggining is needed.
+  index = 0 // TODO: calculate from index
 
   var getPeriod = (year1, month1, year2, month2) => {
     var start = new Date(year1,month1).getTime()
@@ -359,16 +392,12 @@ function recalculateBalances(index){
     state.balances_by_period = []
 
     var years = 4
-    for(var i=0; i< years*12+1; i++){
+    for(var i=0; i< years*12; i++){
       state.balances_by_period[i] = {}
 
-      if(i == 0) //global balance
-        state.balances_by_period[i].period = getPeriod(2000,0,2037,11) //from jan 2000 to dec 2037
-      else{
-        var year = 2018 + Math.floor((i-1)/12)
-        var month = (i-1)%12
-        state.balances_by_period[i].period = getPeriod(year, month)
-      }
+      var year = 2018 + Math.floor((i-1)/12)
+      var month = (i-1)%12
+      state.balances_by_period[i].period = getPeriod(year, month)
 
       state.balances_by_period[i].accounts = []
       for(var j in Accounts.ACCOUNTS){
@@ -398,6 +427,10 @@ function recalculateBalances(index){
     for(var j in state.balances_by_period[i].accounts){
       var a = state.balances_by_period[i].accounts[j]
       a.balance = a.debits - a.credits
+      var lastBalance = 0
+      if(i>0)
+        lastBalance = state.balances_by_period[i-1].accounts[j].acc_balance
+      a.acc_balance = a.balance + lastBalance
       if(a.balance >= 0) a.balance_debit = a.balance
       else a.balance_credit = -a.balance
 
@@ -416,7 +449,7 @@ function save(files){
   }
 }
 
-async function main() {
+async function loadDB() {
   if( !fs.existsSync(config.DB_FILENAME) ){
     log(`Database ${config.DB_FILENAME} does not exists. Creating a new file`)
     await writeFile(config.DB_FILENAME, '[]')
@@ -430,9 +463,11 @@ async function main() {
 
   db = JSON.parse(db)
   state = JSON.parse(state)
+}
 
+async function quime_parser() {
+  await loadDB()
   var changed_from = await processNewFiles()
   recalculateBalances(0)
 }
 
-main()

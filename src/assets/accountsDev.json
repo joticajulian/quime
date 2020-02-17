@@ -1,0 +1,12 @@
+[
+  {"name": "Bank 1", "type": "asset", "currency": "EUR"},
+  {"name": "Bank 2", "type": "asset", "currency": "USD"},
+  {"name": "Cash 1", "type": "asset", "currency": "EUR"},
+  {"name": "Cash 2", "type": "asset", "currency": "EUR"},
+  {"name": "Liability 1", "type": "liability", "currency": "EUR"},
+  {"name": "Salary", "type": "income", "currency": "EUR"},
+  {"name": "Income 2", "type": "income", "currency": "EUR"},  
+  {"name": "Servicios", "type": "expense", "currency": "EUR"},
+  {"name": "Alimentacion", "type": "expense", "currency": "EUR"},
+  {"name": "Otros gastos", "type": "expense", "currency": "EUR"}
+]
