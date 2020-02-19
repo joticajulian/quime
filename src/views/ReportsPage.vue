@@ -50,7 +50,7 @@
         <div class="col-md-9">
           <h2 class="text-center">{{months[selection.month]}} {{selection.year}}</h2>
           <div class="row">
-            <div v-for="(balance_group, type, index1) in balances_by_type" :key="index1" class="col-6">
+            <div v-for="(balance_group, type, index1) in balances_by_type" :key="index1" class="col-md-6 col-xs-12">
               <h4>{{balance_group.name}}</h4>
               <div class="card mb-4">
                 <ul class="list-group list-group-flush">
@@ -86,13 +86,19 @@
               <div class="card mb-4">
                 <ul class="list-group list-group-flush">
                   <li v-for="(item, index) in current_balance" :key="index" class="list-group-item" @click="openModalUpdate(item, index)">
-                    <div class="row">
+                    <!--<div class="row">
                       <div class="col-2">{{item.date_transaction}}</div>
                       <div class="col-2">{{item.description}}</div>
                       <div class="col-2 text-success">{{item.debit}}</div>
                       <div class="col-2 text-danger">{{item.credit}}</div>
                       <div class="col-2">{{item.amount}}</div>
                       <div class="col-2">{{item.acc_balance.toFixed(2)}}</div>
+                    </div>-->
+                    <div>
+                      <div><small>{{item.date_transaction}}</small></div>
+                      <div class="icon">{{item.debit}}</div>
+                      <div class="icon">{{item.credit}}</div>
+                      <div class="description">{{item.description}}</div>
                     </div>
                   </li>
                 </ul>

@@ -1,0 +1,26 @@
+:root {
+  --color1: #926922;
+  --color1-hover: #b58531;
+  --color2: #C3C3C3;
+  --color2-hover: #A1A1A1;
+}
+
+#app {
+  font-size: 0.7 rem;
+}
+
+#app .list-group-item {
+  padding: 0.2rem 1rem;
+}
+
+.icon {
+  height: 50px;
+  width: 50px;
+  background-color: red;
+  margin-right: 10px;
+  display: inline-block;
+}
+
+.description {
+  display: inline-block;
+}
