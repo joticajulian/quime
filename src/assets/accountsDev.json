@@ -1,12 +1,12 @@
 [
-  {"name": "Bank 1", "type": "asset", "currency": "EUR"},
-  {"name": "Bank 2", "type": "asset", "currency": "USD"},
-  {"name": "Cash 1", "type": "asset", "currency": "EUR"},
-  {"name": "Cash 2", "type": "asset", "currency": "EUR"},
-  {"name": "Liability 1", "type": "liability", "currency": "EUR"},
-  {"name": "Salary", "type": "income", "currency": "EUR"},
-  {"name": "Income 2", "type": "income", "currency": "EUR"},  
-  {"name": "Servicios", "type": "expense", "currency": "EUR"},
-  {"name": "Alimentacion", "type": "expense", "currency": "EUR"},
-  {"name": "Otros gastos", "type": "expense", "currency": "EUR"}
+  {"name": "Bank 1", "type": "asset", "currency": "EUR", "logo":"https://cdn.pixabay.com/photo/2017/10/08/19/55/bank-2831361_960_720.png"},
+  {"name": "Bank 2", "type": "asset", "currency": "USD", "logo":"https://cdn.pixabay.com/photo/2017/10/18/14/31/box-2864329_960_720.png"},
+  {"name": "Cash 1", "type": "asset", "currency": "EUR", "logo":"https://cdn.pixabay.com/photo/2018/08/18/12/01/money-3614661_960_720.png"},
+  {"name": "Cash 2", "type": "asset", "currency": "EUR", "logo":"https://cdn.pixabay.com/photo/2013/07/12/12/14/euro-145386_960_720.png"},
+  {"name": "Liability 1", "type": "liability", "currency": "EUR", "logo":"https://cdn.pixabay.com/photo/2018/10/17/08/56/shaking-hands-3753457_960_720.jpg"},
+  {"name": "Salary", "type": "income", "currency": "EUR", "logo": "https://cdn.pixabay.com/photo/2016/09/29/07/58/dollar-1702283_960_720.png"},
+  {"name": "Income 2", "type": "income", "currency": "EUR", "logo": "https://cdn.pixabay.com/photo/2017/10/31/22/46/freelance-2906725_960_720.png"},  
+  {"name": "Servicios", "type": "expense", "currency": "EUR", "logo": "https://cdn.pixabay.com/photo/2018/01/24/17/33/light-bulb-3104355_960_720.jpg"},
+  {"name": "Alimentacion", "type": "expense", "currency": "EUR", "logo": "https://cdn.pixabay.com/photo/2015/12/09/17/11/vegetables-1085063_960_720.jpg"},
+  {"name": "Otros gastos", "type": "expense", "currency": "EUR", "logo":"https://cdn.pixabay.com/photo/2019/10/18/19/51/financial-4560047_960_720.jpg"}
 ]
