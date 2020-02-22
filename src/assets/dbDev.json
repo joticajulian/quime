@@ -1,11 +1,11 @@
 [
-{"date_transaction": "2018-11-14T00:00:00","description": "description 1","amount":  80,"date": 1542153600000,"debit": "Otros gastos","credit": "Bank 1"},
-{"date_transaction": "2018-11-15T00:00:00","description": "description 1","amount":  80,"date": 1542240000000,"debit": "Otros gastos","credit": "Bank 1"},
-{"date_transaction": "2018-12-15T00:00:00","description": "description 1","amount":  80,"date": 1544832000000,"debit": "Otros gastos","credit": "Bank 1"},
-{"date_transaction": "2019-01-15T00:00:00","description": "description 1","amount":  80,"date": 1547506800000,"debit": "Otros gastos","credit": "Bank 1"},
-{"date_transaction": "2019-01-16T00:00:00","description": "description 2","amount":  90,"date": 1547593200000,"debit": "Otros gastos","credit": "Bank 1"},
-{"date_transaction": "2019-01-17T00:00:00","description": "description 3","amount": 180,"date": 1547679600000,"debit": "Otros gastos","credit": "Bank 1"},
-{"date_transaction": "2019-01-17T00:00:00","description": "description 4","amount":  79,"date": 1547679600000,"debit": "Otros gastos","credit": "Bank 1"},
-{"date_transaction": "2019-01-18T00:00:00","description": "description 5","amount":   1,"date": 1547766000000,"debit": "Otros gastos","credit": "Bank 1"},
-{"date_transaction": "2019-02-15T00:00:00","description": "description 1","amount":  80,"date": 1550188800000,"debit": "Otros gastos","credit": "Bank 1"}
+{"date_transaction": "2018-11-14T00:00:00","description": "description 1: long very long description with numbers 123","amount":  80,"date": 1542153600000,"debit": "Otros gastos","credit": "Bank 1"},
+{"date_transaction": "2018-11-15T00:00:00","description": "description 1 long description","amount":  80,"date": 1542240000000,"debit": "Otros gastos","credit": "Bank 1"},
+{"date_transaction": "2018-12-15T00:00:00","description": "description 1 long description","amount":  80,"date": 1544832000000,"debit": "Otros gastos","credit": "Bank 1"},
+{"date_transaction": "2019-01-15T00:00:00","description": "description 1 long description","amount":  80,"date": 1547506800000,"debit": "Otros gastos","credit": "Bank 1"},
+{"date_transaction": "2019-01-16T00:00:00","description": "description 2 long description","amount":  90,"date": 1547593200000,"debit": "Otros gastos","credit": "Bank 1"},
+{"date_transaction": "2019-01-17T00:00:00","description": "description 3 long description adding more characters 123","amount": 180,"date": 1547679600000,"debit": "Otros gastos","credit": "Bank 1"},
+{"date_transaction": "2019-01-17T00:00:00","description": "description 4 long description","amount":  79,"date": 1547679600000,"debit": "Otros gastos","credit": "Bank 1"},
+{"date_transaction": "2019-01-18T00:00:00","description": "description 5 long description","amount":   1,"date": 1547766000000,"debit": "Otros gastos","credit": "Bank 1"},
+{"date_transaction": "2019-02-15T00:00:00","description": "description 1 long description","amount":  80,"date": 1550188800000,"debit": "Otros gastos","credit": "Bank 1"}
 ]
