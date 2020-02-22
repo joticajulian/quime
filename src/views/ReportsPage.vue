@@ -95,10 +95,16 @@
                       <div class="col-2">{{item.acc_balance.toFixed(2)}}</div>
                     </div>-->
                     <div>
-                      <div><small>Date: {{item.date_transaction}}</small></div>
-                      <div class="icon" v-bind:style="{ backgroundImage: 'url(' + item.image_debit + ')' }"></div>
-                      <div class="icon" v-bind:style="{ backgroundImage: 'url(' + item.image_credit + ')' }"></div>
-                      <div class="description">{{item.description}}</div>
+                      <div><small>{{item.date_transaction}}</small></div>
+                      <div class="record-info1">
+                        <div class="icon" v-bind:style="{ backgroundImage: 'url(' + item.image_debit + ')' }"></div>
+                        <div class="icon" v-bind:style="{ backgroundImage: 'url(' + item.image_credit + ')' }"></div>
+                        <div class="description">{{item.description}}</div>
+                      </div>
+                      <div class="record-info2">
+                        <div class="amount">{{item.amount}}</div>
+                        <div class="accumulated">{{item.acc_balance.toFixed(2)}}</div>
+                      </div>
                     </div>
                   </li>
                 </ul>

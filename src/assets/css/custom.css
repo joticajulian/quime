@@ -27,4 +27,33 @@
 
 .description {
   display: inline-block;
+  font-size: 0.9rem;
+  width: calc(100% - 120px);
+  vertical-align: middle;
+}
+
+.record-info1 {
+  width: calc(100% - 100px);
+  display: inline-block;
+  vertical-align: middle;
+}
+
+.record-info2 {
+  width: 100px;
+  display: inline-block;
+  vertical-align: middle;
+}
+
+.amount {
+  display: inline-block;
+  width: 100%;
+  text-align: right;
+  font-size: 1.3rem;
+}
+
+.accumulated {
+  display: inline-block;
+  text-align: right;
+  font-size: 0.9rem;
+  width: 100%;
 }
