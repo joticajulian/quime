@@ -16,9 +16,13 @@
 .icon {
   height: 50px;
   width: 50px;
-  background-color: red;
   margin-right: 10px;
   display: inline-block;
+  overflow: hidden;
+  background-size: cover;
+  background-position: center center;
+  border-radius: 20%;
+  vertical-align: middle;
 }
 
 .description {

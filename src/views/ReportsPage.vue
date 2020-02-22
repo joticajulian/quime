@@ -95,9 +95,9 @@
                       <div class="col-2">{{item.acc_balance.toFixed(2)}}</div>
                     </div>-->
                     <div>
-                      <div><small>{{item.date_transaction}}</small></div>
-                      <div class="icon">{{item.debit}}</div>
-                      <div class="icon">{{item.credit}}</div>
+                      <div><small>Date: {{item.date_transaction}}</small></div>
+                      <div class="icon" v-bind:style="{ backgroundImage: 'url(' + item.image_debit + ')' }"></div>
+                      <div class="icon" v-bind:style="{ backgroundImage: 'url(' + item.image_credit + ')' }"></div>
                       <div class="description">{{item.description}}</div>
                     </div>
                   </li>
@@ -355,7 +355,12 @@ export default{
         else
           accumulated -= r.amount
         r.acc_balance = accumulated
+
+        // icons
+        r.image_debit  = this.accounts.find( (a)=>{return a.name === r.debit}  ).logo
+        r.image_credit = this.accounts.find( (a)=>{return a.name === r.credit} ).logo
       }
+
       this.current_balance = current_balance
       this.orderCurrentBalance()
     },
