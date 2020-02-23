@@ -219,6 +219,8 @@ function estimateAccount(r) {
     return {debit: ACCOUNT.bcee, credit: ACCOUNT.servicios}
   if(d.includes('debit 5431931908256161 mastercard'))
     return {debit: ACCOUNT.bcee, credit: ACCOUNT.mastercard}
+  if(d.includes('zebra premium'))
+    return {debit: ACCOUNT.bcee, credit: ACCOUNT.servicios}
   if(r.amount > 0)
     return {debit: ACCOUNT.bcee, credit: ACCOUNT.otras_entradas}
 
