@@ -24,12 +24,23 @@
         <div class="col-6">
           <button class="btn btn-primary" @click="updateRecord">{{modalType}}</button>
         </div>
-        <div class="col-6 text-right">
-          <button class="btn btn-danger" @click="removeRecord">Remove</button>
+        <div class="col-6 text-right" v-if="modalType !== 'insert'">
+          <button class="btn btn-danger" @click="openModalConfirmDelete">Remove</button>
         </div>
       </div>
     </b-modal>
 
+    <b-modal ref="modalConfirmDelete" hide-footer title="Borrar">
+      <p>¿Seguro que desea borrar? Luego no es posible deshacer</p>
+      <div class="row mt-4">
+        <div class="col-8">
+          <button class="btn btn-block btn-primary" @click="cancelDelete">Cancelar</button>
+        </div>
+        <div class="col-4">
+          <button class="btn btn-danger" @click="confirmDelete">Borrar</button>
+        </div>
+      </div>
+    </b-modal>
 
     <AppHeader/>
     <div class="container-fluid mt-5">
@@ -272,6 +283,10 @@ export default{
       }
     },
 
+    openModalConfirmDelete(){
+      this.$refs.modalConfirmDelete.show()
+    },
+
     async updateRecord(){
       this.hideSuccess()
       this.hideDanger()
@@ -311,6 +326,14 @@ export default{
           throw error
         }
       }
+    },
+
+    confirmDelete(){
+      this.$refs.modalConfirmDelete.hide()
+      this.removeRecord()
+    },
+    cancelDelete(){
+      this.$refs.modalConfirmDelete.hide()
     },
 
     async runParser(){
