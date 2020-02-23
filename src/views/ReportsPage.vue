@@ -1,35 +1,86 @@
 <template>
   <div>
     <b-modal ref="modalEditRecord" hide-footer :title="modalTitle">
-      <label class="label-form-control col-3">Fecha</label>
+      <b-form-select v-model="modalRecord.type" :options="['ingreso','gasto','movimiento','otro']"></b-form-select>
+      
+      <label class="label-form-control mt-3">Fecha</label>
       <input class="form-control" v-model="modalRecord.date" type="text"/>
 
-      <label class="label-form-control col-3">Descripcion</label>
+      <label class="label-form-control mt-3">Descripcion</label>
       <input class="form-control" v-model="modalRecord.description" type="text"/>
 
-      <label class="label-form-control col-3">Debito</label>
-      <select class="form-control" v-model="modalRecord.debit">
-        <option v-for="(acc, index) in accounts">{{acc.name}}</option>
-      </select>
+      <div v-if="modalRecord.type === 'ingreso'">
+        <label class="label-form-control mt-3">Cuenta</label>
+        <select class="form-control" v-model="modalRecord.debit">
+          <option v-for="(acc, index) in accounts_asset_liability">{{acc.name}}</option>
+        </select>
 
-      <label class="label-form-control col-3">Credito</label>
-      <select class="form-control" v-model="modalRecord.credit">
-        <option v-for="(acc, index) in accounts">{{acc.name}}</option>
-      </select>
+        <label class="label-form-control mt-3">Tipo ingreso</label>
+        <select class="form-control" v-model="modalRecord.credit">
+          <option v-for="(acc, index) in accounts_income">{{acc.name}}</option>
+        </select>
+      </div>
 
-      <label class="label-form-control col-3">Cantidad</label>
+      <div v-if="modalRecord.type === 'gasto'">
+        <label class="label-form-control mt-3">Cuenta</label>
+        <select class="form-control" v-model="modalRecord.credit">
+          <option v-for="(acc, index) in accounts_asset_liability">{{acc.name}}</option>
+        </select>
+
+        <label class="label-form-control mt-3">Tipo gasto</label>
+        <select class="form-control" v-model="modalRecord.debit">
+          <option v-for="(acc, index) in accounts_expense">{{acc.name}}</option>
+        </select>
+      </div>
+
+      <div v-if="modalRecord.type === 'movimiento'">
+        <label class="label-form-control mt-3">Desde</label>
+        <select class="form-control" v-model="modalRecord.credit">
+          <option v-for="(acc, index) in accounts_asset_liability">{{acc.name}}</option>
+        </select>
+
+        <label class="label-form-control mt-3">Hacia</label>
+        <select class="form-control" v-model="modalRecord.debit">
+          <option v-for="(acc, index) in accounts_asset_liability">{{acc.name}}</option>
+        </select>
+      </div>
+
+      <div v-if="modalRecord.type === 'otro'">
+        <label class="label-form-control mt-3">Debito</label>
+        <select class="form-control" v-model="modalRecord.debit">
+          <option v-for="(acc, index) in accounts">{{acc.name}}</option>
+        </select>
+
+        <label class="label-form-control mt-3">Credito</label>
+        <select class="form-control" v-model="modalRecord.credit">
+          <option v-for="(acc, index) in accounts">{{acc.name}}</option>
+        </select>
+      </div>
+
+      <label class="label-form-control mt-3">Cantidad</label>
       <input class="form-control" v-model="modalRecord.amount" type="text"/>
 
       <div class="row mt-4">
         <div class="col-6">
           <button class="btn btn-primary" @click="updateRecord">{{modalType}}</button>
         </div>
-        <div class="col-6 text-right">
-          <button class="btn btn-danger" @click="removeRecord">Remove</button>
+        <div class="col-6 text-right" v-if="modalType !== 'insert'">
+          <button class="btn btn-danger" @click="openModalConfirmDelete">Remove</button>
         </div>
       </div>
     </b-modal>
 
+    <b-modal ref="modalConfirmDelete" hide-footer title="Borrar">
+      <p>¿Seguro que desea borrar? Luego no es posible deshacer</p>
+      <div class="row mt-4">
+        <div class="col-8">
+          <button class="btn btn-block btn-primary" @click="cancelDelete">Cancelar</button>
+        </div>
+        <div class="col-4">
+          <button class="btn btn-danger" @click="confirmDelete">Borrar</button>
+        </div>
+      </div>
+    </b-modal>
 
     <AppHeader/>
     <div class="container-fluid mt-5">
@@ -157,7 +208,8 @@ export default{
       current_balance: [],
       current_selection: {
         type: 'expenses',
-        index: 0
+        index: 0,
+        period: 0
       },
       orderBy: 'date',
       balances_by_type: {
@@ -237,9 +289,12 @@ export default{
         result = await axios.get(Config.SERVER_API + 'accounts')
         this.accounts = result.data
       }
+      this.accounts_income = this.accounts.filter((a)=>{return a.type === 'income'})
+      this.accounts_expense = this.accounts.filter((a)=>{return a.type === 'expense'})
+      this.accounts_asset_liability = this.accounts.filter((a)=>{return a.type === 'asset' || a.type === 'liability'})
       this.db.forEach( (r)=>{ r.date_transaction = r.date_transaction.slice(0,-9) })
       this.loadPeriods()
-      this.loadReport(this.balances_by_period[0])
+      this.loadReport(this.balances_by_period[ this.current_selection.period ])
       this.selectAccount( this.current_selection.type, this.current_selection.index )
     },
 
@@ -268,8 +323,13 @@ export default{
         description: item.description,
         debit: item.debit,
         credit: item.credit,
-        amount: item.amount
+        amount: item.amount,
+        type: 'otro'
       }
+    },
+
+    openModalConfirmDelete(){
+      this.$refs.modalConfirmDelete.show()
     },
 
     async updateRecord(){
@@ -313,6 +373,14 @@ export default{
       }
     },
 
+    confirmDelete(){
+      this.$refs.modalConfirmDelete.hide()
+      this.removeRecord()
+    },
+    cancelDelete(){
+      this.$refs.modalConfirmDelete.hide()
+    },
+
     async runParser(){
       this.hideSuccess()
       this.hideDanger()
@@ -328,7 +396,8 @@ export default{
 
     selectAccount(type, index){
       this.current_balance = []
-      this.current_selection = { type, index }
+      this.current_selection.type = type
+      this.current_selection.index = index
       this.current_account = this.balances_by_type[type].balances[index].account
       var getPeriod = (year1, month1, year2, month2) => {
         var start = new Date(year1,month1).getTime()
@@ -425,6 +494,7 @@ export default{
     },
 
     loadReport(period){
+      this.current_selection.period = period
       this.balances_by_type = this.getBalancesByType(period)
       this.selection.month = period.month
       this.selection.year = period.year
