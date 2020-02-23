@@ -208,7 +208,8 @@ export default{
       current_balance: [],
       current_selection: {
         type: 'expenses',
-        index: 0
+        index: 0,
+        period: 0
       },
       orderBy: 'date',
       balances_by_type: {
@@ -293,7 +294,7 @@ export default{
       this.accounts_asset_liability = this.accounts.filter((a)=>{return a.type === 'asset' || a.type === 'liability'})
       this.db.forEach( (r)=>{ r.date_transaction = r.date_transaction.slice(0,-9) })
       this.loadPeriods()
-      this.loadReport(this.balances_by_period[0])
+      this.loadReport(this.balances_by_period[ this.current_selection.period ])
       this.selectAccount( this.current_selection.type, this.current_selection.index )
     },
 
@@ -394,7 +395,8 @@ export default{
 
     selectAccount(type, index){
       this.current_balance = []
-      this.current_selection = { type, index }
+      this.current_selection.type = type
+      this.current_selection.index = index
       this.current_account = this.balances_by_type[type].balances[index].account
       var getPeriod = (year1, month1, year2, month2) => {
         var start = new Date(year1,month1).getTime()
@@ -491,6 +493,7 @@ export default{
     },
 
     loadReport(period){
+      this.current_selection.period = period
       this.balances_by_type = this.getBalancesByType(period)
       this.selection.month = period.month
       this.selection.year = period.year
