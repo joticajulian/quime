@@ -323,7 +323,8 @@ export default{
         description: item.description,
         debit: item.debit,
         credit: item.credit,
-        amount: item.amount
+        amount: item.amount,
+        type: 'otro'
       }
     },
 
