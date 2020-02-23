@@ -1,23 +1,63 @@
 <template>
   <div>
     <b-modal ref="modalEditRecord" hide-footer :title="modalTitle">
-      <label class="label-form-control col-3">Fecha</label>
+      <b-form-select v-model="modalRecord.type" :options="['ingreso','gasto','movimiento','otro']"></b-form-select>
+      
+      <label class="label-form-control mt-3">Fecha</label>
       <input class="form-control" v-model="modalRecord.date" type="text"/>
 
-      <label class="label-form-control col-3">Descripcion</label>
+      <label class="label-form-control mt-3">Descripcion</label>
       <input class="form-control" v-model="modalRecord.description" type="text"/>
 
-      <label class="label-form-control col-3">Debito</label>
-      <select class="form-control" v-model="modalRecord.debit">
-        <option v-for="(acc, index) in accounts">{{acc.name}}</option>
-      </select>
+      <div v-if="modalRecord.type === 'ingreso'">
+        <label class="label-form-control mt-3">Cuenta</label>
+        <select class="form-control" v-model="modalRecord.debit">
+          <option v-for="(acc, index) in accounts_asset_liability">{{acc.name}}</option>
+        </select>
 
-      <label class="label-form-control col-3">Credito</label>
-      <select class="form-control" v-model="modalRecord.credit">
-        <option v-for="(acc, index) in accounts">{{acc.name}}</option>
-      </select>
+        <label class="label-form-control mt-3">Tipo ingreso</label>
+        <select class="form-control" v-model="modalRecord.credit">
+          <option v-for="(acc, index) in accounts_income">{{acc.name}}</option>
+        </select>
+      </div>
 
-      <label class="label-form-control col-3">Cantidad</label>
+      <div v-if="modalRecord.type === 'gasto'">
+        <label class="label-form-control mt-3">Cuenta</label>
+        <select class="form-control" v-model="modalRecord.credit">
+          <option v-for="(acc, index) in accounts_asset_liability">{{acc.name}}</option>
+        </select>
+
+        <label class="label-form-control mt-3">Tipo gasto</label>
+        <select class="form-control" v-model="modalRecord.debit">
+          <option v-for="(acc, index) in accounts_expense">{{acc.name}}</option>
+        </select>
+      </div>
+
+      <div v-if="modalRecord.type === 'movimiento'">
+        <label class="label-form-control mt-3">Desde</label>
+        <select class="form-control" v-model="modalRecord.credit">
+          <option v-for="(acc, index) in accounts_asset_liability">{{acc.name}}</option>
+        </select>
+
+        <label class="label-form-control mt-3">Hacia</label>
+        <select class="form-control" v-model="modalRecord.debit">
+          <option v-for="(acc, index) in accounts_asset_liability">{{acc.name}}</option>
+        </select>
+      </div>
+
+      <div v-if="modalRecord.type === 'otro'">
+        <label class="label-form-control mt-3">Debito</label>
+        <select class="form-control" v-model="modalRecord.debit">
+          <option v-for="(acc, index) in accounts">{{acc.name}}</option>
+        </select>
+
+        <label class="label-form-control mt-3">Credito</label>
+        <select class="form-control" v-model="modalRecord.credit">
+          <option v-for="(acc, index) in accounts">{{acc.name}}</option>
+        </select>
+      </div>
+
+      <label class="label-form-control mt-3">Cantidad</label>
       <input class="form-control" v-model="modalRecord.amount" type="text"/>
 
       <div class="row mt-4">
@@ -248,6 +288,9 @@ export default{
         result = await axios.get(Config.SERVER_API + 'accounts')
         this.accounts = result.data
       }
+      this.accounts_income = this.accounts.filter((a)=>{return a.type === 'income'})
+      this.accounts_expense = this.accounts.filter((a)=>{return a.type === 'expense'})
+      this.accounts_asset_liability = this.accounts.filter((a)=>{return a.type === 'asset' || a.type === 'liability'})
       this.db.forEach( (r)=>{ r.date_transaction = r.date_transaction.slice(0,-9) })
       this.loadPeriods()
       this.loadReport(this.balances_by_period[0])
