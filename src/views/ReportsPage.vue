@@ -86,16 +86,16 @@
               <div class="card mb-4">
                 <ul class="list-group list-group-flush">
                   <li v-for="(item, index) in current_balance" :key="index" class="list-group-item" @click="openModalUpdate(item, index)">
-                    <!--<div class="row">
-                      <div class="col-2">{{item.date_transaction}}</div>
-                      <div class="col-2">{{item.description}}</div>
-                      <div class="col-2 text-success">{{item.debit}}</div>
-                      <div class="col-2 text-danger">{{item.credit}}</div>
-                      <div class="col-2">{{item.amount}}</div>
-                      <div class="col-2">{{item.acc_balance.toFixed(2)}}</div>
-                    </div>-->
                     <div>
-                      <div><small>{{item.date_transaction}}</small></div>
+                      <div class="record-info3">{{item.date_transaction}}</div>
+                      <div class="record-info4">
+                        <div class="badge" :class="{
+                          'badge-success':item.color === 'green',
+                          'badge-primary':item.color === 'blue',
+                          'badge-danger': item.color === 'red',
+                          'badge-info'  : item.color === 'yellow'
+                        }">{{item.badge}}</div>
+                      </div>
                       <div class="record-info1">
                         <div class="icon" v-bind:style="{ backgroundImage: 'url(' + item.image_debit + ')' }"></div>
                         <div class="icon" v-bind:style="{ backgroundImage: 'url(' + item.image_credit + ')' }"></div>
@@ -362,13 +362,43 @@ export default{
           accumulated -= r.amount
         r.acc_balance = accumulated
 
+        var account_debit = this.accounts.find( (a)=>{return a.name === r.debit}  )
+        var account_credit= this.accounts.find( (a)=>{return a.name === r.credit} )
+
         // icons
-        r.image_debit  = this.accounts.find( (a)=>{return a.name === r.debit}  ).logo
-        r.image_credit = this.accounts.find( (a)=>{return a.name === r.credit} ).logo
+        r.image_debit  = account_debit.logo
+        r.image_credit = account_credit.logo
+
+        // type of record
+        var typeRec = this.typeRecord(account_debit.type, account_credit.type)
+        r.badge = typeRec.text
+        r.color = typeRec.color
       }
 
       this.current_balance = current_balance
       this.orderCurrentBalance()
+    },
+
+    typeRecord(debit, credit){
+      if(debit === 'asset'     && credit === 'asset')     return {text: 'movimiento', color: 'blue' }
+      if(debit === 'asset'     && credit === 'liability') return {text: 'devolucion', color: 'green'}
+      if(debit === 'asset'     && credit === 'income')    return {text: 'ingreso',    color: 'green'}
+      if(debit === 'asset'     && credit === 'expense')   return {text: 'devolucion', color: 'green'}
+
+      if(debit === 'liability' && credit === 'asset')     return {text: 'pago',       color: 'red'  }
+      if(debit === 'liability' && credit === 'liability') return {text: 'transfer deuda', color: 'blue'}
+      if(debit === 'liability' && credit === 'income')    return {text: 'pago con ingresos',    color: 'yellow'}
+      if(debit === 'liability' && credit === 'expense')   return {text: 'devolucion', color: 'green'}
+
+      if(debit === 'income'    && credit === 'asset')     return {text: 'devolucion ingreso', color: 'red' }
+      if(debit === 'income'    && credit === 'liability') return {text: 'ingreso prestado?', color: 'yellow'}
+      if(debit === 'income'    && credit === 'income')    return {text: 'mov ingreso',    color: 'blue'}
+      if(debit === 'income'    && credit === 'expense')   return {text: 'devolucion a ingresos?', color: 'yellow'}
+
+      if(debit === 'expense'   && credit === 'asset')     return {text: 'gasto', color: 'red' }
+      if(debit === 'expense'   && credit === 'liability') return {text: 'gasto', color: 'red' }
+      if(debit === 'expense'   && credit === 'income')    return {text: 'ingreso y gasto', color: 'yellow'} // income that immediatly is spent, without touching my assets (?)
+      if(debit === 'expense'   && credit === 'expense')   return {text: 'mov gasto', color: 'blue'}
     },
 
     selectPeriod(period){

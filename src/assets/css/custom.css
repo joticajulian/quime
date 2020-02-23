@@ -44,6 +44,19 @@
   vertical-align: middle;
 }
 
+.record-info3 {
+  display: inline-block;
+  font-size: 0.9rem;
+  width: 50%;
+}
+
+.record-info4 {
+  display: inline-block;
+  font-size: 0.9rem;
+  width: 50%;
+  text-align: right;
+}
+
 .amount {
   display: inline-block;
   width: 100%;
