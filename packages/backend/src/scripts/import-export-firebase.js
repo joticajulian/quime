@@ -1,16 +1,15 @@
 var fs = require('fs')
 var firebase = require('firebase-admin');
-var firebaseCert = require("./firebase-adminsdk.json");
 require('dotenv').config()
 
-const config = require('./config')
+const config = require('../config')
 
 firebase.initializeApp({
-  credential: firebase.credential.cert(firebaseCert),
-  databaseURL: "https://quime-fb825.firebaseio.com"
+  credential: firebase.credential.cert(config.credential),
+  databaseURL: config.databaseURL,
 });
 
-const refFirestore = firebase.firestore().collection('accounting');
+const refFirestore = firebase.firestore().collection(config.collection);
 
 const [type, file] = process.argv.slice(2)
 
