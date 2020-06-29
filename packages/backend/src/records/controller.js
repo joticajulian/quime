@@ -247,7 +247,12 @@ function save(files){
   }
 }
 
-function insert(records) {
+function insert(input) {
+  let records;
+  if(Array.isArray(input))
+    records = input;
+  else
+    records = [input];
 
   // remove from "records" those that are already in the DB.
   var result = removeAlreadyInDB(records)

@@ -1,5 +1,6 @@
 const jose = require("jose");
 const firebaseCredential = require("./firebase-adminsdk.json");
+require('dotenv').config();
 
 const config = {
   username: process.env.USERNAME_QUIME,
@@ -8,9 +9,10 @@ const config = {
     public: "../../frontend/public"
   },
   privKeyJWK: jose.JWK.generateSync("EC", "secp256k1"),
-  databaseURL: "https://quime-fb825.firebaseio.com",
+  databaseURL: process.env.DATABASE_URL,
   credential: firebaseCredential,
-  collection: "test-collection",
+  collection: process.env.COLLECTION || "test-collection",
+  port: process.env.PORT || 8080,
 };
 
 module.exports = {
