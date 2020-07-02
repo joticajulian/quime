@@ -94,7 +94,7 @@ router.delete('/:id', async (req, res, next)=>{
 router.post('/parse', async (req, res, next)=>{
   try{
     const data = await readFile(req);
-    const result = controller.parse(data);
+    const result = await controller.parse(data);
     res.send(result);
   }catch(error){
     next(error);

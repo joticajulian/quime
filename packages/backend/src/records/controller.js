@@ -1,15 +1,10 @@
-var firebase = require('firebase-admin');
+const firebase = require('firebase-admin');
 
 const config = require("../config");
 const logger = require("../logger");
 const csvParser = require("./csvParser");
 const { v1: uuidv1 } = require('uuid');
 const {BadRequestError, NotFoundError} = require("../errors");
-
-firebase.initializeApp({
-  credential: firebase.credential.cert(config.credential),
-  databaseURL: config.databaseURL,
-});
 
 const refFirestore = firebase.firestore().collection(config.collection);
 
@@ -299,9 +294,9 @@ function remove(id) {
   return "removed";
 }
 
-function parse(data) {
+async function parse(data) {
   try{
-    const records = csvParser.parse(data, 3);
+    const records = await csvParser.parse(data, 3);
     return records;
   } catch(error) {
     logger.info("Not parsed with option 3: " + error.message);
@@ -309,7 +304,7 @@ function parse(data) {
   }
 
   try{
-    const records = csvParser.parse(data, 2);
+    const records = await csvParser.parse(data, 2);
     return records;
   } catch(error) {
     logger.info("Not parsed with option 2: " + error.message);
@@ -317,7 +312,7 @@ function parse(data) {
   }
 
   try{
-    const records = csvParser.parse(data, 1);
+    const records = await csvParser.parse(data, 1);
     return records;
   } catch(error) {
     logger.info("Not parsed with option 1: " + error.message);

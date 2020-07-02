@@ -9,5 +9,5 @@ firebase.initializeApp({
 
 const refFirestore = firebase.firestore().collection(config.collection);
 
-refFirestore.doc('accounts').set({accounts});
+refFirestore.doc('accounts').set(accounts);
 console.log("accounts saved in firebase");

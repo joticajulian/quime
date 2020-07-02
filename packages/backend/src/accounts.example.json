@@ -1,9 +1,40 @@
-[
-  {"name": "Bank", "type":"asset", "currency": "EUR", "logo": "", "precision": 2},
-  {"name": "Cash", "type":"asset", "currency": "EUR", "logo": "", "precision": 2},
-  {"name": "Credit card", "type":"liability", "currency": "EUR", "logo": "", "precision": 2},
-  {"name": "Debts to pay", "type":"liability", "currency": "EUR", "logo": "", "precision": 2},
-  {"name": "Salary", "type":"income", "currency": "EUR", "logo": "", "precision": 2},
-  {"name": "Food", "type":"expense", "currency": "EUR", "logo": "", "precision": 2},
-  {"name": "Rent", "type":"expense", "currency": "EUR", "logo": "", "precision": 2}
-]
+{
+  "accounts": [
+    {"name": "Bank", "type":"asset", "currency": "EUR", "logo": "", "precision": 2},
+    {"name": "Cash", "type":"asset", "currency": "EUR", "logo": "", "precision": 2},
+    {"name": "Credit card", "type":"liability", "currency": "EUR", "logo": "", "precision": 2},
+    {"name": "Debts to pay", "type":"liability", "currency": "EUR", "logo": "", "precision": 2},
+    {"name": "Salary", "type":"income", "currency": "EUR", "logo": "", "precision": 2},
+    {"name": "Food", "type":"expense", "currency": "EUR", "logo": "", "precision": 2},
+    {"name": "Rent", "type":"expense", "currency": "EUR", "logo": "", "precision": 2}
+  ],
+  "estimation": [
+    {
+      "description": "rent appartment",
+      "resolve": {
+        "debit": "Bank",
+        "credit": "Rent"
+      }
+    },
+    {
+      "description": "from company A",
+      "resolve": {
+        "debit": "Bank",
+        "credit": "Salary"
+      }
+    },
+    {
+      "amount": "positive",
+      "resolve": {
+        "debit": "Bank",
+        "credit": "Salary"
+      }
+    },
+    {
+      "resolve": {
+        "debit": "Bank",
+        "credit": "Food"
+      }
+    }
+  ]
+}
