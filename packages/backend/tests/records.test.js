@@ -6,7 +6,7 @@ const configTest = require("./config");
 const Server = require("../src/server");
 const {isInitialized} = require("../src/records/controller");
 
-const server = new Server().start(configTest.port);
+const server = new Server().getServer();
 const request = supertest(server);
 const token = jose.JWT.sign({aud: "api"}, config.privKeyJWK);
 
@@ -104,5 +104,24 @@ describe("functional test for records", () => {
 
     const respGet3 = await callApi.get("/" + id);
     expect(respGet3.status).toBe(404);
+  });
+
+  it("parses a csv file", async () => {
+    expect.assertions(3);
+    const response = await callApi.post("/parse").attach("file", "report.csv");
+    expect(response.status).toBe(200);
+    expect(response.body).toStrictEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          id: expect.any(String),
+          description: expect.any(String),
+          amount: expect.any(Number),
+          date: expect.any(Number),
+          debit: expect.any(String),
+          credit: expect.any(String),
+        })
+      ])
+    );
+    expect(response.body.length).toBeGreaterThan(0);
   });
 });
