@@ -1,12 +1,19 @@
-var SERVER = 'http://localhost:3000/'
-var SERVER_API = 'http://localhost:3000/api/'
+const server = process.env.SERVER || "http://localhost:8081";
 
-if(process.env.NODE_ENV === "production"){
-  var SERVER = '/'
-  var SERVER_API = '/api/'
+const config = {
+  production: {
+    serverRecords: "/api/records",
+    serverLogin: "/login",
+  },
+  development: {
+    serverRecords: `${server}/api/records`,
+    serverLogin: `${server}/login`,
+  }
 }
 
+const environment = process.env.NODE_ENV;
+const finalConfig = config[environment];
+
 export default{
-  SERVER,
-  SERVER_API
+  ...finalConfig,
 }

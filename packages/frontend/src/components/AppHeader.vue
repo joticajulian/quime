@@ -41,7 +41,7 @@ export default {
 
   methods: {
     async logout() {
-      await axios.get(Config.SERVER_API + 'logout')
+      localStorage.removeItem("JWT");
       this.$emit('logout')
       router.push('/')
     }

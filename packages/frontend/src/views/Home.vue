@@ -19,7 +19,7 @@
 <script>
 import axios from 'axios'
 import router from '@/router'
-import Config from '@/config'
+import config from '@/config'
 
 export default {
   name: 'home',
@@ -39,11 +39,12 @@ export default {
     async login(){
       this.alert.danger = false
       try{
-        var data = {
+        const data = {
           username: this.username,
           password: this.password
         }
-        var result = await axios.post(Config.SERVER_API + 'login', data)
+        const response = await axios.post(config.serverLogin, data);
+        localStorage.setItem("JWT", response.data.token);
         console.log('logged in')
         router.push('/dashboard')
       }catch(error){
