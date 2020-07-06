@@ -43,19 +43,19 @@ function insertRecord(_record, id = uuidv1()){
   delete record.repeated
   if(db.length == 0){
     db.push(record)
-    return {appended:true, changed_from: db.length-1, id}
+    return {appended:true, changedFrom: db.length-1, id}
   }
 
   if(record.date >= db[db.length-1].date){
     db.push(record)
-    return {appended:true, changed_from: db.length-1, id}
+    return {appended:true, changedFrom: db.length-1, id}
   }
 
   var index = db.findIndex( (r)=>{return r.date > record.date})
   if(index < 0)
     throw new Error(`Database error: index = -1, db.length:${db.length}, db date:${new Date(db[db.length-1].date).toISOString()}, record to insert:${JSON.stringify(record)}`)
   db.splice(index, 0, record)
-  return {appended:false, changed_from:index, id}
+  return {appended:false, changedFrom:index, id}
 }
 
 function removeRecord(id){
@@ -109,19 +109,19 @@ function removeAlreadyInDB(records){
   var dbFiltered = db.filter( (r)=>{ return r.date >= dateRange.start && r.date <= dateRange.end})
 
   // Loop to remove from "records" the records that are already in the database "db"
-  var total_repeated = 0
+  var totalRepeated = 0
   dbFiltered.forEach( (r)=>{
     var index_found = records.findIndex( (re)=>{ return csvParser.equalRecord(re, r) })
     if(index_found >= 0){
       records[index_found].repeated--
       if(records[index_found].repeated < 0){
         records.splice(index_found, 1)
-        total_repeated++
+        totalRepeated++
       }
     }
   })
-  var total_records = records.reduce( (t,r)=>{ return t + 1 + r.repeated}, 0)
-  return {records, total_records, total_repeated}
+  var totalRecords = records.reduce( (t,r)=>{ return t + 1 + r.repeated}, 0)
+  return {records, totalRecords, totalRepeated}
 }
 
 function newAccountBalance(account){
@@ -250,12 +250,12 @@ function insert(input) {
     records = [input];
 
   // remove from "records" those that are already in the DB.
-  var result = removeAlreadyInDB(records)
+  const result = removeAlreadyInDB(records)
   records = result.records
-  var total_repeated = result.total_repeated
-  var total_records = result.total_records
+  const totalRepeated = result.totalRepeated
+  const totalRecords = result.totalRecords
 
-  let changed_from = -1;
+  let changedFrom = -1;
   var appended = true
   let ids = [];
   for(var i in records){
@@ -264,16 +264,16 @@ function insert(input) {
       ids.push(result.id);
 
       if(!result.appended) appended = false
-      if(result.changed_from < changed_from || changed_from == -1)
-        changed_from = result.changed_from
+      if(result.changedFrom < changedFrom || changedFrom == -1)
+        changedFrom = result.changedFrom
     }
   }
   recalculateBalances(0);
   save(['db']);
   return {
-    total_records,
-    total_repeated,
-    changed_from,
+    totalRecords,
+    totalRepeated,
+    changedFrom,
     appended,
     ids,
   };
