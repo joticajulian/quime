@@ -82,12 +82,18 @@
       </div>
     </b-modal>
 
+    <b-modal ref="modalUpload" hide-footer title="Leer archivo">
+      <ListRecords :records="fileRecords"/>
+      <button class="btn btn-primary mt-3" @click="insertRecords(fileRecords)">Insert</button>
+    </b-modal>
+
     <AppHeader/>
     <div class="container-fluid mt-5">
+      <ListRecords/>
       <div class="row">
         <div class="col-md-3">
           <ul class="list-group list-group-flush">
-            <li v-for="(item, index) in balances_by_period" :key="index" class="list-group-item" @click="selectPeriod(item)">
+            <li v-for="(item, index) in balances_by_period" :key="index" class="list-group-item" @click="selectPeriod(index)">
               <div class="row">
                 <div class="col-7">{{item.date}}</div>
                 <div class="col-5">
@@ -163,7 +169,12 @@
             </div>
           </div>
           <button class="btn btn-primary mt-3 mb-3 mr-3" @click="openModalUpdate(null, 0, 'insert')">Insert</button>
-          <button class="btn btn-primary mt-3 mb-3" @click="runParser">Leer extractos bancarios</button>
+          <div class="custom-file">            
+            <input type="file" class="custom-file-input" id="input_file" :class="{'is-invalid': error.file }"/>
+            <label class="custom-file-label" for="input_file">Choose file...</label>
+            <div v-if="error.file" class="invalid-feedback">{{ errorText.file }}</div>
+            <button class="btn btn-primary mt-3 mb-3 mr-3" @click="uploadFile">Upload</button>
+          </div>
           <div v-if="alert.info" class="alert alert-info" role="alert">{{alert.infoText}}</div>
           <div v-if="alert.success" class="alert alert-success" role="alert" v-html="alert.successText"></div>
           <div v-if="alert.danger"  class="alert alert-danger" role="alert">{{alert.dangerText}}</div>
@@ -179,8 +190,11 @@ import dbDev from '@/assets/dbDev.json'
 import accountsDev from '@/assets/accountsDev.json'
 import axios from 'axios'
 import AppHeader from '@/components/AppHeader'
-import Config from '@/config'
+import ListRecords from '@/components/ListRecords'
+import config from '@/config'
 import Alerts from '@/mixins/Alerts'
+
+let callApi;
 
 export default{
   name: 'ReportsPage',
@@ -204,6 +218,7 @@ export default{
         year: '2019',
         month: '0'
       },
+      fileRecords: [],
       current_account: 'No account selected',
       current_balance: [],
       current_selection: {
@@ -250,12 +265,19 @@ export default{
         debit: '',
         credit: '',
         amount: '',
-      }
+      },
+      error: {
+        file: false,
+      },
+      errorText: {
+        file: "",
+      },
     }
   },
 
   components: {
-    AppHeader
+    AppHeader,
+    ListRecords,
   },
 
   mixins:[
@@ -263,6 +285,12 @@ export default{
   ],
 
   created(){
+    const token = localStorage.getItem("JWT");
+    callApi = axios.create({
+      baseURL: config.serverRecords,
+      timeout: 5000,
+      headers: {"Authorization" : `Bearer ${token}`},
+    });
     this.load()
   },
 
@@ -274,27 +302,17 @@ export default{
 
   methods: {
     async load(){
-      if(process.env.NODE_ENV === 'development'){
-        console.log('Development mode')
-        this.db = dbDev
-        this.state = stateDev
-        this.accounts = accountsDev
-        console.log(this.state)
-      }else{
-        var result = await axios.get(Config.SERVER + 'db.json')
-        this.db = result.data
-        console.log('db obtained')
-        result = await axios.get(Config.SERVER + 'state.json')
-        this.state = result.data
-        result = await axios.get(Config.SERVER_API + 'accounts')
-        this.accounts = result.data
-      }
+      var result = await callApi.get("/")
+      this.db = result.data.db;
+      this.state = result.data.state;
+      this.accounts = result.data.accounts;console.log(this.db)
+      
       this.accounts_income = this.accounts.filter((a)=>{return a.type === 'income'})
       this.accounts_expense = this.accounts.filter((a)=>{return a.type === 'expense'})
       this.accounts_asset_liability = this.accounts.filter((a)=>{return a.type === 'asset' || a.type === 'liability'})
-      this.db.forEach( (r)=>{ r.date_transaction = r.date_transaction.slice(0,-9) })
+      this.db.forEach( (r)=>{ r.date_transaction = new Date(r.date).toISOString().slice(0,-14) })
       this.loadPeriods()
-      this.loadReport(this.balances_by_period[ this.current_selection.period ])
+      this.loadReport(this.current_selection.period)
       this.selectAccount( this.current_selection.type, this.current_selection.index )
     },
 
@@ -332,23 +350,38 @@ export default{
       this.$refs.modalConfirmDelete.show()
     },
 
+    async insertRecords(records) {
+      this.hideSuccess()
+      this.hideDanger()
+      
+      try{
+        var result = await callApi.put("/", records);
+        console.log(result.data)
+        this.showSuccess('Records inserted');
+        this.load()
+      }catch(error){
+        this.showDanger(error.message)
+        throw error
+      }
+    },
+
     async updateRecord(){
       this.hideSuccess()
       this.hideDanger()
       var date = new Date(this.modalRecord.date+'T00:00:00Z').getTime()
-      var data = {
-        record: {
-          date: date,
-          date_transaction: new Date(date).toISOString().slice(0,-5),
-          description: this.modalRecord.description,
-          debit: this.modalRecord.debit,
-          credit: this.modalRecord.credit,
-          amount: parseFloat(this.modalRecord.amount)
-        }
+      const record = {
+        date: date,
+        date_transaction: new Date(date).toISOString().slice(0,-5),
+        description: this.modalRecord.description,
+        debit: this.modalRecord.debit,
+        credit: this.modalRecord.credit,
+        amount: parseFloat(this.modalRecord.amount)
       }
-      if(this.modalType === 'update') data.record.id = this.modalRecord.id
+      const id = "";
+      if(this.modalType === 'update') id = this.modalRecord.id;
+
       try{
-        var result = await axios.post(Config.SERVER_API + this.modalType, data)
+        var result = await callApi.put("/" + id, record)
         this.showSuccess('Record updated')
         this.$refs.modalEditRecord.hide()
         this.load()
@@ -362,7 +395,8 @@ export default{
       if(this.modalType === 'insert') return
       if(this.modalType === 'update'){
         try{
-          var result = await axios.post(Config.SERVER_API + 'remove', { id: this.modalRecord.id })
+          const id = this.modalRecord.id;
+          var result = await callApi.delete("/" + id);
           this.showSuccess('Record removed')
           this.$refs.modalEditRecord.hide()
           this.load()
@@ -379,6 +413,16 @@ export default{
     },
     cancelDelete(){
       this.$refs.modalConfirmDelete.hide()
+    },
+
+    async uploadFile() {
+      const localFile = document.getElementById("input_file").files[0];
+      const formFile = new FormData();
+      formFile.append("file", localFile);
+      const response = await callApi.post("/parse", formFile);
+      console.log(response.data);
+      this.fileRecords = response.data;
+      this.$refs.modalUpload.show();
     },
 
     async runParser(){
@@ -456,7 +500,7 @@ export default{
 
       if(debit === 'liability' && credit === 'asset')     return {text: 'pago',       color: 'red'  }
       if(debit === 'liability' && credit === 'liability') return {text: 'transfer deuda', color: 'blue'}
-      if(debit === 'liability' && credit === 'income')    return {text: 'pago con ingresos',    color: 'yellow'}
+      if(debit === 'liability' && credit === 'income')    return {text: 'devolucion',    color: 'yellow'}
       if(debit === 'liability' && credit === 'expense')   return {text: 'devolucion', color: 'green'}
 
       if(debit === 'income'    && credit === 'asset')     return {text: 'devolucion ingreso', color: 'red' }
@@ -470,8 +514,8 @@ export default{
       if(debit === 'expense'   && credit === 'expense')   return {text: 'mov gasto', color: 'blue'}
     },
 
-    selectPeriod(period){
-      this.loadReport(period)
+    selectPeriod(index){
+      this.loadReport(index)
       this.selectAccount('expenses',0)
     },
 
@@ -493,8 +537,9 @@ export default{
       }
     },
 
-    loadReport(period){
-      this.current_selection.period = period
+    loadReport(index){
+      const period = this.balances_by_period[index];
+      this.current_selection.period = index;
       this.balances_by_type = this.getBalancesByType(period)
       this.selection.month = period.month
       this.selection.year = period.year
