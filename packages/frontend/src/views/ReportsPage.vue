@@ -134,38 +134,7 @@
             </div>
             <div class="col-12 mt-3">
               <h4>{{current_account}}</h4>
-              <div class="text-right">
-                <select v-model="orderBy">
-                  <option value="date">Ordenar por fecha</option>
-                  <option value="amount">Ordenar por cantidad</option>
-                </select>
-              </div>
-              <div class="card mb-4">
-                <ul class="list-group list-group-flush">
-                  <li v-for="(item, index) in current_balance" :key="index" class="list-group-item" @click="openModalUpdate(item, index)">
-                    <div>
-                      <div class="record-info3">{{item.date_transaction}}</div>
-                      <div class="record-info4">
-                        <div class="badge" :class="{
-                          'badge-success':item.color === 'green',
-                          'badge-primary':item.color === 'blue',
-                          'badge-danger': item.color === 'red',
-                          'badge-info'  : item.color === 'yellow'
-                        }">{{item.badge}}</div>
-                      </div>
-                      <div class="record-info1">
-                        <div class="icon" v-bind:style="{ backgroundImage: 'url(' + item.image_debit + ')' }"></div>
-                        <div class="icon" v-bind:style="{ backgroundImage: 'url(' + item.image_credit + ')' }"></div>
-                        <div class="description">{{item.description}}</div>
-                      </div>
-                      <div class="record-info2">
-                        <div class="amount">{{item.amount}}</div>
-                        <div class="accumulated">{{item.acc_balance.toFixed(2)}}</div>
-                      </div>
-                    </div>
-                  </li>
-                </ul>
-              </div>
+              <ListRecords :records="current_balance"></ListRecords>
             </div>
           </div>
           <button class="btn btn-primary mt-3 mb-3 mr-3" @click="openModalUpdate(null, 0, 'insert')">Insert</button>
@@ -226,7 +195,6 @@ export default{
         index: 0,
         period: 0
       },
-      orderBy: 'date',
       balances_by_type: {
         incomes: {
           name: 'Ingresos',
@@ -294,18 +262,12 @@ export default{
     this.load()
   },
 
-  watch: {
-    orderBy: function(){
-      this.orderCurrentBalance()
-    }
-  },
-
   methods: {
     async load(){
       var result = await callApi.get("/")
       this.db = result.data.db;
       this.state = result.data.state;
-      this.accounts = result.data.accounts;console.log(this.db)
+      this.accounts = result.data.accounts;
       
       this.accounts_income = this.accounts.filter((a)=>{return a.type === 'income'})
       this.accounts_expense = this.accounts.filter((a)=>{return a.type === 'expense'})
@@ -489,7 +451,6 @@ export default{
       }
 
       this.current_balance = current_balance
-      this.orderCurrentBalance()
     },
 
     typeRecord(debit, credit){
@@ -517,24 +478,6 @@ export default{
     selectPeriod(index){
       this.loadReport(index)
       this.selectAccount('expenses',0)
-    },
-
-    orderCurrentBalance(){
-      if(this.orderBy === 'date'){
-        this.current_balance.sort((a,b)=>{
-          if(a.date > b.date) return 1
-          if(a.date < b.date) return -1
-          return 0
-        })
-      }else if(this.orderBy === 'amount'){
-        this.current_balance.sort((a,b)=>{
-          if(a.amount < b.amount) return 1
-          if(a.amount > b.amount) return -1
-          return 0
-        })
-      }else{
-        console.log('Error')
-      }
     },
 
     loadReport(index){
