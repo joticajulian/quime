@@ -250,10 +250,10 @@ function insert(input) {
     records = [input];
 
   // remove from "records" those that are already in the DB.
-  const result = removeAlreadyInDB(records)
-  records = result.records
-  const totalRepeated = result.totalRepeated
-  const totalRecords = result.totalRecords
+  const res = removeAlreadyInDB(records)
+  records = res.records
+  const totalRepeated = res.totalRepeated
+  const totalRecords = res.totalRecords
 
   let changedFrom = -1;
   var appended = true

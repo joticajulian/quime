@@ -1,11 +1,6 @@
-var firebase = require('firebase-admin');
+const firebase = require("firebase-admin");
 const accounts = require("../accounts");
-const config = require('../config')
-
-firebase.initializeApp({
-  credential: firebase.credential.cert(config.credential),
-  databaseURL: config.databaseURL,
-});
+const config = require('../config');
 
 const refFirestore = firebase.firestore().collection(config.collection);
 
