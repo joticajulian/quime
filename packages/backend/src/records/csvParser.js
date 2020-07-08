@@ -221,7 +221,9 @@ function parseRecord(data,option) {
         var value = data[i].trim().replace(/ +(?= )/g,'').toLowerCase()
         break
       case 'number':
-        var value = parseFloat(data[i].replace(',','.'))
+        var value = parseFloat(data[i].replace(',','.'));
+        // value as integer (we assume precision 2, for EUR)
+        value = parseInt( 100 * value );
         break
       case 'date':
         var aux = data[i].split('/')
