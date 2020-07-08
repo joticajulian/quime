@@ -89,7 +89,6 @@
 
     <AppHeader/>
     <div class="container-fluid mt-5">
-      <ListRecords/>
       <div class="row">
         <div class="col-md-3">
           <ul class="list-group list-group-flush">
