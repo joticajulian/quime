@@ -1,4 +1,5 @@
 node_modules
 coverage
 src/firebase-adminsdk.json
+src/scripts/test*.json
 accounts.json
