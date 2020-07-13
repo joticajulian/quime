@@ -11,6 +11,9 @@ const refFirestore = firebase.firestore().collection(config.collection);
 var db = []
 var state = {}
 let accounts = [];
+let currencies = [];
+let estimations = [];
+let principalCurrency = "";
 
 let initialized = false;
 
@@ -25,37 +28,54 @@ async function loadDB() {
     const docAccounts = await refFirestore.doc("accounts").get();
     if(docState.exists) state = docState.data()
     if(docDB.exists) db = docDB.data().records
-    if(docAccounts.exists) accounts = docAccounts.data().accounts;
+    if(docAccounts.exists) {
+      accounts = docAccounts.data().accounts;
+      estimations = docAccounts.data().estimations;
+      currencies = docAccounts.data().currencies;
+      principalCurrency = docAccounts.data().principalCurrency;
+    }
 
     if(!state) state = {}
     if(!db) db = []
     if(!accounts) accounts = []
+    if(!currencies) currencies = []
+    if(!estimations) estimations = [];
   }catch(error){
     logger.info('Firestore init error');
     throw error;
   }
 }
 
-function insertRecord(_record, id = uuidv1()){
-  var record = JSON.parse(JSON.stringify(_record));
+function insertRecord(r, id = uuidv1()){
+  const amount = BigInt(r.amount).toString();
+  let amountDebit;
+  let amountCredit;
 
-  record.id = id
-  delete record.repeated
-  if(db.length == 0){
+  if(r.amountDebit) amountDebit = BigInt(r.amountDebit).toString();
+  if(r.amountCredit) amountCredit = BigInt(r.amountCredit).toString();
+
+  const record = {
+    id,
+    date: r.date,
+    description: r.description,
+    debit: r.debit,
+    credit: r.credit,
+    amount,
+    amountDebit,
+    amountCredit,
+  };
+
+  const len = db.length;
+  if (len === 0 || record.date >= db[len-1].date){
     db.push(record)
-    return {appended:true, changedFrom: db.length-1, id}
+    return {appended:true, changedFrom: len-1, id}
+  } else {
+    const index = db.findIndex( (r)=>{return r.date > record.date})
+    if(index < 0)
+      throw new Error(`Database error: index = -1, db.length:${len}, db date:${new Date(db[len-1].date).toISOString()}, record to insert:${JSON.stringify(record)}`)
+    db.splice(index, 0, record)
+    return {appended:false, changedFrom:index, id};
   }
-
-  if(record.date >= db[db.length-1].date){
-    db.push(record)
-    return {appended:true, changedFrom: db.length-1, id}
-  }
-
-  var index = db.findIndex( (r)=>{return r.date > record.date})
-  if(index < 0)
-    throw new Error(`Database error: index = -1, db.length:${db.length}, db date:${new Date(db[db.length-1].date).toISOString()}, record to insert:${JSON.stringify(record)}`)
-  db.splice(index, 0, record)
-  return {appended:false, changedFrom:index, id}
 }
 
 function removeRecord(id){
@@ -131,29 +151,14 @@ function newAccountBalance(account){
     account_type: account.type,
     currency: account.currency,
     precision:account.precision,
-    debits: 0,
-    credits: 0,
-    balance_debit: 0,
-    balance_credit:0,
-    balance: 0,    // balance of the period
-    acc_balance: 0 // accumulated balance
+    debits: 0n,
+    credits: 0n,
+    balance_debit: 0n,
+    balance_credit:0n,
+    balance: 0n,    // balance of the period
+    acc_balance: 0n // accumulated balance
   }
 }
-
-//problem with float number: removing 0.0000001 issues
-function fixFloatNumbers(accountBalance, period){
-  var fields = ['debits','credits','balance_debit','balance_credit','balance','acc_balance']
-  for(var f in fields){
-    var field = fields[f]
-    try{
-      accountBalance[field] = parseFloat(accountBalance[field].toFixed(accountBalance.precision))
-    }catch(error){
-      log(`Error in period ${period}: balance account: ${JSON.stringify(accountBalance[field])}`)
-      throw error
-    }
-  }
-}
-
 
 function recalculateBalances(index){
   index = 0 // TODO: calculate from index
@@ -206,38 +211,43 @@ function recalculateBalances(index){
 
       var accountBalanceDebit  = state.balances_by_period[i].accounts.find( (b)=>{return b.account === account_debit})
       var accountBalanceCredit = state.balances_by_period[i].accounts.find( (b)=>{return b.account === account_credit})
-      accountBalanceDebit.debits += record.amount
-      accountBalanceCredit.credits += record.amount
+      accountBalanceDebit.debits += BigInt(record.amount);
+      accountBalanceCredit.credits += BigInt(record.amount);
     }
 
     for(var j in state.balances_by_period[i].accounts){
       var a = state.balances_by_period[i].accounts[j]
       a.balance = a.debits - a.credits
-      var lastBalance = 0
+      var lastBalance = 0n
       if(i>0)
         lastBalance = state.balances_by_period[i-1].accounts[j].acc_balance
       a.acc_balance = a.balance + lastBalance
       if(a.balance >= 0) a.balance_debit = a.balance
       else a.balance_credit = -a.balance
-
-      a = fixFloatNumbers(a,j)
     }
   }
   save(['state'])
 }
 
+function safeObject(obj) {
+  return JSON.parse(JSON.stringify(obj, (key, value) =>
+      typeof value === 'bigint'
+          ? value.toString()
+          : value // return everything else unchanged
+  ));
+}
 
 function save(files){
   if(!files) files = ['db','state']
   for(var i in files){
     if( files[i]==='db'    ){
       // writeFile(config.DB_FILENAME, JSON.stringify(db))
-      refFirestore.doc('db').set({records: db})
+      refFirestore.doc('db').set({records: safeObject(db)})
     }
 
     if( files[i]==='state' ){
       // writeFile(config.STATE_FILENAME, JSON.stringify(state))
-      refFirestore.doc('state').set(state)
+      refFirestore.doc('state').set(safeObject(state))
     }
   }
 }
@@ -327,7 +337,14 @@ function getRecord(id) {
 }
 
 function getRecords() {
-  return { db, state, accounts };
+  return {
+    db: safeObject(db),
+    state: safeObject(state),
+    accounts,
+    currencies,
+    estimations,
+    principalCurrency,
+  };
 }
 
 loadDB().then(()=>{

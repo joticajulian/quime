@@ -1,73 +1,12 @@
 <template>
   <div>
     <b-modal ref="modalEditRecord" hide-footer :title="modalTitle">
-      <b-form-select v-model="modalRecord.type" :options="['ingreso','gasto','movimiento','otro']"></b-form-select>
-      
-      <label class="label-form-control mt-3">Fecha</label>
-      <input class="form-control" v-model="modalRecord.date" type="text"/>
-
-      <label class="label-form-control mt-3">Descripcion</label>
-      <input class="form-control" v-model="modalRecord.description" type="text"/>
-
-      <div v-if="modalRecord.type === 'ingreso'">
-        <label class="label-form-control mt-3">Cuenta</label>
-        <select class="form-control" v-model="modalRecord.debit">
-          <option v-for="(acc, index) in accounts_asset_liability">{{acc.name}}</option>
-        </select>
-
-        <label class="label-form-control mt-3">Tipo ingreso</label>
-        <select class="form-control" v-model="modalRecord.credit">
-          <option v-for="(acc, index) in accounts_income">{{acc.name}}</option>
-        </select>
-      </div>
-
-      <div v-if="modalRecord.type === 'gasto'">
-        <label class="label-form-control mt-3">Cuenta</label>
-        <select class="form-control" v-model="modalRecord.credit">
-          <option v-for="(acc, index) in accounts_asset_liability">{{acc.name}}</option>
-        </select>
-
-        <label class="label-form-control mt-3">Tipo gasto</label>
-        <select class="form-control" v-model="modalRecord.debit">
-          <option v-for="(acc, index) in accounts_expense">{{acc.name}}</option>
-        </select>
-      </div>
-
-      <div v-if="modalRecord.type === 'movimiento'">
-        <label class="label-form-control mt-3">Desde</label>
-        <select class="form-control" v-model="modalRecord.credit">
-          <option v-for="(acc, index) in accounts_asset_liability">{{acc.name}}</option>
-        </select>
-
-        <label class="label-form-control mt-3">Hacia</label>
-        <select class="form-control" v-model="modalRecord.debit">
-          <option v-for="(acc, index) in accounts_asset_liability">{{acc.name}}</option>
-        </select>
-      </div>
-
-      <div v-if="modalRecord.type === 'otro'">
-        <label class="label-form-control mt-3">Debito</label>
-        <select class="form-control" v-model="modalRecord.debit">
-          <option v-for="(acc, index) in accounts">{{acc.name}}</option>
-        </select>
-
-        <label class="label-form-control mt-3">Credito</label>
-        <select class="form-control" v-model="modalRecord.credit">
-          <option v-for="(acc, index) in accounts">{{acc.name}}</option>
-        </select>
-      </div>
-
-      <label class="label-form-control mt-3">Cantidad</label>
-      <input class="form-control" v-model="modalRecord.amount" type="text"/>
-
-      <div class="row mt-4">
-        <div class="col-6">
-          <button class="btn btn-primary" @click="updateRecord">{{modalType}}</button>
-        </div>
-        <div class="col-6 text-right" v-if="modalType !== 'insert'">
-          <button class="btn btn-danger" @click="openModalConfirmDelete">Remove</button>
-        </div>
-      </div>
+      <FormRecord
+        :accounts="accounts"
+        :currencies="currencies"
+        :principalCurrency="principalCurrency"
+        @updated="recordUpdated"
+      ></FormRecord>
     </b-modal>
 
     <b-modal ref="modalConfirmDelete" hide-footer title="Borrar">
@@ -83,7 +22,7 @@
     </b-modal>
 
     <b-modal ref="modalUpload" hide-footer title="Leer archivo">
-      <ListRecords :records="fileRecords"/>
+      <ListRecords :records="fileRecords" :accounts="accounts"/>
       <button class="btn btn-primary mt-3" @click="insertRecords(fileRecords)">Insert</button>
     </b-modal>
 
@@ -96,8 +35,8 @@
               <div class="row">
                 <div class="col-7">{{item.date}}</div>
                 <div class="col-5">
-                  <div class="text-right" :class="{'text-success':item.balances_by_type.incomes.total_green, 'text-danger':!item.balances_by_type.incomes.total_green}">{{item.balances_by_type.incomes.total.toFixed(2)}}</div>
-                  <div class="text-right" :class="{'text-success':item.balances_by_type.expenses.total_green, 'text-danger':!item.balances_by_type.expenses.total_green}">{{item.balances_by_type.expenses.total.toFixed(2)}}</div>
+                  <div class="text-right" :class="{'text-success':item.balances_by_type.incomes.total_green, 'text-danger':!item.balances_by_type.incomes.total_green}">{{item.balances_by_type.incomes.total}}</div>
+                  <div class="text-right" :class="{'text-success':item.balances_by_type.expenses.total_green, 'text-danger':!item.balances_by_type.expenses.total_green}">{{item.balances_by_type.expenses.total}}</div>
                 </div>
               </div>
             </li>
@@ -125,7 +64,7 @@
                   <li class="list-group-item">
                     <div class="row">
                       <div class="col-8"><strong>Total</strong></div>
-                      <div class="col-4 text-right" :class="{'text-success':balance_group.total_green, 'text-danger':!balance_group.total_green}"><strong>{{balance_group.total.toFixed(2)}}</strong></div>
+                      <div class="col-4 text-right" :class="{'text-success':balance_group.total_green, 'text-danger':!balance_group.total_green}"><strong>{{balance_group.total}}</strong></div>
                     </div>
                   </li>
                 </ul>
@@ -133,7 +72,7 @@
             </div>
             <div class="col-12 mt-3">
               <h4>{{current_account}}</h4>
-              <ListRecords :records="current_balance"></ListRecords>
+              <ListRecords :records="current_balance" :accounts="accounts"></ListRecords>
             </div>
           </div>
           <button class="btn btn-primary mt-3 mb-3 mr-3" @click="openModalUpdate(null, 0, 'insert')">Insert</button>
@@ -159,6 +98,7 @@ import accountsDev from '@/assets/accountsDev.json'
 import axios from 'axios'
 import AppHeader from '@/components/AppHeader'
 import ListRecords from '@/components/ListRecords'
+import FormRecord from "@/components/FormRecord"
 import config from '@/config'
 import Alerts from '@/mixins/Alerts'
 
@@ -224,6 +164,9 @@ export default{
       db: [],
       state: {},
       accounts: [],
+      currencies: [],
+      principalCurrency: "",
+      estimations: [],
       modalTitle: 'Modificar',
       modalType: 'update',
       modalRecord: {
@@ -245,6 +188,7 @@ export default{
   components: {
     AppHeader,
     ListRecords,
+    FormRecord,
   },
 
   mixins:[
@@ -267,6 +211,13 @@ export default{
       this.db = result.data.db;
       this.state = result.data.state;
       this.accounts = result.data.accounts;
+      this.estimations = result.data.estimations;
+      this.currencies = result.data.currencies;
+      this.principalCurrency = result.data.principalCurrency;
+
+      this.$store.state.currencies = this.currencies;
+      this.$store.state.principalCurrency = this.principalCurrency;
+      this.$store.state.accounts = this.accounts;
       
       this.accounts_income = this.accounts.filter((a)=>{return a.type === 'income'})
       this.accounts_expense = this.accounts.filter((a)=>{return a.type === 'expense'})
@@ -326,30 +277,10 @@ export default{
       }
     },
 
-    async updateRecord(){
-      this.hideSuccess()
-      this.hideDanger()
-      var date = new Date(this.modalRecord.date+'T00:00:00Z').getTime()
-      const record = {
-        date: date,
-        date_transaction: new Date(date).toISOString().slice(0,-5),
-        description: this.modalRecord.description,
-        debit: this.modalRecord.debit,
-        credit: this.modalRecord.credit,
-        amount: parseFloat(this.modalRecord.amount)
-      }
-      const id = "";
-      if(this.modalType === 'update') id = this.modalRecord.id;
-
-      try{
-        var result = await callApi.put("/" + id, record)
-        this.showSuccess('Record updated')
-        this.$refs.modalEditRecord.hide()
-        this.load()
-      }catch(error){
-        this.showDanger(error.message)
-        throw error
-      }
+    recordUpdated() {
+      this.showSuccess('Record updated');
+      this.$refs.modalEditRecord.hide();
+      this.load();
     },
 
     async removeRecord(){
@@ -386,19 +317,6 @@ export default{
       this.$refs.modalUpload.show();
     },
 
-    async runParser(){
-      this.hideSuccess()
-      this.hideDanger()
-      try{
-        var result = await axios.get(Config.SERVER_API + 'run_parser')
-        this.showSuccess('Datos leidos')
-        this.load()
-      }catch(error){
-        this.showDanger(error.message)
-        throw error
-      }
-    },
-
     selectAccount(type, index){
       this.current_balance = []
       this.current_selection.type = type
@@ -427,51 +345,11 @@ export default{
       }).slice()
       var accumulated = 0
       if(type === 'assets' || type === 'liabilities')
-        accumulated = this.balances_by_type[type].balances[index].acc_balance - this.balances_by_type[type].balances[index].debits + this.balances_by_type[type].balances[index].credits
-      for(var i in current_balance){
-        var r = current_balance[i]
-        if(r.debit === this.current_account)
-          accumulated += r.amount
-        else
-          accumulated -= r.amount
-        r.acc_balance = accumulated
-
-        var account_debit = this.accounts.find( (a)=>{return a.name === r.debit}  )
-        var account_credit= this.accounts.find( (a)=>{return a.name === r.credit} )
-
-        // icons
-        r.image_debit  = account_debit.logo
-        r.image_credit = account_credit.logo
-
-        // type of record
-        var typeRec = this.typeRecord(account_debit.type, account_credit.type)
-        r.badge = typeRec.text
-        r.color = typeRec.color
-      }
-
+        accumulated = 
+          BigInt(this.balances_by_type[type].balances[index].acc_balance)
+           - BigInt(this.balances_by_type[type].balances[index].debits)
+           + BigInt(this.balances_by_type[type].balances[index].credits)
       this.current_balance = current_balance
-    },
-
-    typeRecord(debit, credit){
-      if(debit === 'asset'     && credit === 'asset')     return {text: 'movimiento', color: 'blue' }
-      if(debit === 'asset'     && credit === 'liability') return {text: 'devolucion', color: 'green'}
-      if(debit === 'asset'     && credit === 'income')    return {text: 'ingreso',    color: 'green'}
-      if(debit === 'asset'     && credit === 'expense')   return {text: 'devolucion', color: 'green'}
-
-      if(debit === 'liability' && credit === 'asset')     return {text: 'pago',       color: 'red'  }
-      if(debit === 'liability' && credit === 'liability') return {text: 'transfer deuda', color: 'blue'}
-      if(debit === 'liability' && credit === 'income')    return {text: 'devolucion',    color: 'yellow'}
-      if(debit === 'liability' && credit === 'expense')   return {text: 'devolucion', color: 'green'}
-
-      if(debit === 'income'    && credit === 'asset')     return {text: 'devolucion ingreso', color: 'red' }
-      if(debit === 'income'    && credit === 'liability') return {text: 'ingreso prestado?', color: 'yellow'}
-      if(debit === 'income'    && credit === 'income')    return {text: 'mov ingreso',    color: 'blue'}
-      if(debit === 'income'    && credit === 'expense')   return {text: 'devolucion a ingresos?', color: 'yellow'}
-
-      if(debit === 'expense'   && credit === 'asset')     return {text: 'gasto', color: 'red' }
-      if(debit === 'expense'   && credit === 'liability') return {text: 'gasto', color: 'red' }
-      if(debit === 'expense'   && credit === 'income')    return {text: 'ingreso y gasto', color: 'yellow'} // income that immediatly is spent, without touching my assets (?)
-      if(debit === 'expense'   && credit === 'expense')   return {text: 'mov gasto', color: 'blue'}
     },
 
     selectPeriod(index){
@@ -499,35 +377,35 @@ export default{
       }
 
       var balancesByType = {
-        incomes: { name: 'Ingresos', balances: [], total: 0, total_green: true},
-        expenses: { name: 'Gastos', balances: [], total: 0, total_green: false},
-        assets: { name: 'Activos', balances: [], total: 0, total_green: true},
-        liabilities: { name: 'Pasivos', balances: [], total: 0, total_green: false},        
+        incomes: { name: 'Ingresos', balances: [], total: BigInt(0), total_green: true},
+        expenses: { name: 'Gastos', balances: [], total: BigInt(0), total_green: false},
+        assets: { name: 'Activos', balances: [], total: BigInt(0), total_green: true},
+        liabilities: { name: 'Pasivos', balances: [], total: BigInt(0), total_green: false},        
       }
 
       var total = 0
       var total_green = true
       for(var i in period.accounts){
         var b = period.accounts[i]
-        if(b.debits == 0 && b.credits == 0
+        if(BigInt(b.debits) == 0 && BigInt(b.credits) == 0
           && (b.account_type === 'income' || b.account_type === 'expense')) continue
         var type = plural(b.account_type)
         switch(b.account_type){
           case 'asset':
           case 'liability':
-            b.green = b.acc_balance >= 0
+            b.green = BigInt(b.acc_balance) >= 0
             b.balance_show = b.acc_balance
             break
           case 'income':
           case 'expense':
-            b.green = b.balance < 0
-            b.balance_show = -b.balance
+            b.green = BigInt(b.balance) < 0
+            b.balance_show = -BigInt(b.balance)
             break
           default:
             break
         }
-        balancesByType[type].total += b.balance_show
-        balancesByType[type].total_green = balancesByType[type].total >= 0
+        balancesByType[type].total += BigInt(b.balance_show)
+        balancesByType[type].total_green = BigInt(balancesByType[type].total) >= 0
         balancesByType[type].balances.push(b)
       }
       return balancesByType

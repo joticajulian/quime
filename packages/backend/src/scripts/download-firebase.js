@@ -17,7 +17,7 @@ async function download() {
     console.log("No data in firebase")
     return
   }
-  fs.writeFile(file, JSON.stringify(doc.data()), function(err){
+  fs.writeFile(file, JSON.stringify(doc.data().records), function(err){
     if(err) throw err;
     console.log(`File saved in ${file}!`)
   });

@@ -221,9 +221,13 @@ function parseRecord(data,option) {
         var value = data[i].trim().replace(/ +(?= )/g,'').toLowerCase()
         break
       case 'number':
-        var value = parseFloat(data[i].replace(',','.'));
         // value as integer (we assume precision 2, for EUR)
-        value = parseInt( 100 * value );
+        const precision = 2;
+        let [integer, decimals] = data[i].split(",");
+        if(!decimals) decimals = "";
+        decimals = decimals.substring(0, precision);
+        decimals += "0".repeat(precision - decimals.length);
+        value = integer + decimals;
         break
       case 'date':
         var aux = data[i].split('/')
@@ -238,12 +242,12 @@ function parseRecord(data,option) {
 
   var account = estimateAccount(record)
   record.date = new Date(record.date_transaction+'Z').getTime()
-  if(record.amount >= 0){
+  if(BigInt(record.amount) >= 0){
     record.debit = account.debit
     record.credit = account.credit
   }else{
     //store only positive number, then the relation debit/credit changes
-    record.amount = -record.amount
+    record.amount = (-BigInt(record.amount)).toString();
     record.debit = account.credit
     record.credit = account.debit
   }
