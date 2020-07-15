@@ -35,8 +35,8 @@
               <div class="row">
                 <div class="col-7">{{item.date}}</div>
                 <div class="col-5">
-                  <div class="text-right" :class="{'text-success':item.balances_by_type.incomes.total_green, 'text-danger':!item.balances_by_type.incomes.total_green}">{{item.balances_by_type.incomes.total}}</div>
-                  <div class="text-right" :class="{'text-success':item.balances_by_type.expenses.total_green, 'text-danger':!item.balances_by_type.expenses.total_green}">{{item.balances_by_type.expenses.total}}</div>
+                  <div class="text-right" :class="{'text-success':item.balances_by_type.incomes.total_green, 'text-danger':!item.balances_by_type.incomes.total_green}">{{item.balances_by_type.incomes.totalShow}}</div>
+                  <div class="text-right" :class="{'text-success':item.balances_by_type.expenses.total_green, 'text-danger':!item.balances_by_type.expenses.total_green}">{{item.balances_by_type.expenses.totalShow}}</div>
                 </div>
               </div>
             </li>
@@ -51,28 +51,51 @@
                 <ul class="list-group list-group-flush">
                   <li v-for="(item,index2) in balance_group.balances" :key="index2" class="list-group-item" @click="selectAccount(type,index2)">
                     <div v-if="type === 'incomes' || type === 'expenses'" class="row">
-                      <div class="col-8">{{item.account}}</div>
-                      <div class="col-4 text-right" :class="{'text-success':item.green, 'text-danger':!item.green}">{{item.balance_show}}</div>
+                      <div class="col-6">{{item.account}}</div>
+                      <div class="col-6 text-right" :class="{'text-success':item.green, 'text-danger':!item.green}">{{item.monthBalanceShow}}</div>
                     </div>
                     <div v-else class="row">
-                      <div class="col-5">{{item.account}}</div>
-                      <div class="col-2 text-right text-success">+{{item.debits}}</div>
-                      <div class="col-2 text-right text-danger" >-{{item.credits}}</div>
-                      <div class="col-3 text-right" :class="{'text-success':item.green, 'text-danger':!item.green}">{{item.balance_show}}</div>
+                      <div class="col-6">{{item.account}}</div>
+                      <div class="col-6 text-right" :class="{'text-success':item.green, 'text-danger':!item.green}">{{item.balanceShow}}</div>
                     </div>
                   </li>
                   <li class="list-group-item">
                     <div class="row">
                       <div class="col-8"><strong>Total</strong></div>
-                      <div class="col-4 text-right" :class="{'text-success':balance_group.total_green, 'text-danger':!balance_group.total_green}"><strong>{{balance_group.total}}</strong></div>
+                      <div class="col-4 text-right" :class="{'text-success':balance_group.total_green, 'text-danger':!balance_group.total_green}"><strong>{{balance_group.totalShow}}</strong></div>
                     </div>
                   </li>
                 </ul>
               </div>
             </div>
             <div class="col-12 mt-3">
-              <h4>{{current_account}}</h4>
-              <ListRecords :records="current_balance" :accounts="accounts"></ListRecords>
+              <h4>{{currentBalance.account}}</h4>
+              <div class="d-inline-block">
+                <div>Saldo anterior:</div>
+                <div>Debitos:</div>
+                <div>Creditos:</div>
+                <div>Total:</div>
+              </div>
+              <div class="d-inline-block ml-3">
+                <div class="text-right">{{currentBalance.lastBalanceShow}}</div>
+                <div class="text-right">+{{currentBalance.debitsShow}}</div>
+                <div class="text-right">-{{currentBalance.creditsShow}}</div>
+                <div class="text-right">{{currentBalance.balanceShow}}</div>
+              </div>
+              <div v-if="currentBalance.currency !== principalCurrency"
+                class="d-inline-block ml-3"
+              >
+                <div class="text-right">{{currentBalance.lastBalanceCurrencyShow}}</div>
+                <div class="text-right">+{{currentBalance.debitsCurrencyShow}}</div>
+                <div class="text-right">-{{currentBalance.creditsCurrencyShow}}</div>
+                <div class="text-right">{{currentBalance.balanceCurrencyShow}}</div>
+              </div>
+    
+              <ListRecords
+                :records="currentRecords"
+                :accounts="accounts"
+                :refAccount="currentBalance.account"
+              ></ListRecords>
             </div>
           </div>
           <button class="btn btn-primary mt-3 mb-3 mr-3" @click="openModalUpdate(null, 0, 'insert')">Insert</button>
@@ -101,6 +124,7 @@ import ListRecords from '@/components/ListRecords'
 import FormRecord from "@/components/FormRecord"
 import config from '@/config'
 import Alerts from '@/mixins/Alerts'
+import Utils from "@/mixins/Utils"
 
 let callApi;
 
@@ -128,7 +152,8 @@ export default{
       },
       fileRecords: [],
       current_account: 'No account selected',
-      current_balance: [],
+      currentBalance: {},
+      currentRecords: [],
       current_selection: {
         type: 'expenses',
         index: 0,
@@ -192,7 +217,8 @@ export default{
   },
 
   mixins:[
-    Alerts
+    Alerts,
+    Utils,
   ],
 
   created(){
@@ -318,10 +344,10 @@ export default{
     },
 
     selectAccount(type, index){
-      this.current_balance = []
       this.current_selection.type = type
       this.current_selection.index = index
-      this.current_account = this.balances_by_type[type].balances[index].account
+      this.currentBalance = this.balances_by_type[type].balances[index];
+      this.current_account = this.currentBalance.account;
       var getPeriod = (year1, month1, year2, month2) => {
         var start = new Date(year1,month1).getTime()
 
@@ -338,7 +364,7 @@ export default{
         }
       }
       var period = getPeriod( this.selection.year , this.selection.month )
-      var current_balance = this.db.filter( (r)=>{
+      var currentRecords = this.db.filter( (r)=>{
         return r.date >= period.start && r.date <= period.end &&
           (r.debit  === this.current_account ||
            r.credit === this.current_account)
@@ -349,7 +375,7 @@ export default{
           BigInt(this.balances_by_type[type].balances[index].acc_balance)
            - BigInt(this.balances_by_type[type].balances[index].debits)
            + BigInt(this.balances_by_type[type].balances[index].credits)
-      this.current_balance = current_balance
+      this.currentRecords = currentRecords
     },
 
     selectPeriod(index){
@@ -394,18 +420,35 @@ export default{
           case 'asset':
           case 'liability':
             b.green = BigInt(b.acc_balance) >= 0
-            b.balance_show = b.acc_balance
+            b.monthBalance = BigInt(b.balance);
+            b.monthBalanceCurrency = BigInt(b.balanceCurrency);
             break
           case 'income':
           case 'expense':
             b.green = BigInt(b.balance) < 0
-            b.balance_show = -BigInt(b.balance)
+            b.monthBalance = -BigInt(b.balance);
+            b.monthBalanceCurrency = -BigInt(b.balanceCurrency);
             break
           default:
             break
         }
-        balancesByType[type].total += BigInt(b.balance_show)
-        balancesByType[type].total_green = BigInt(balancesByType[type].total) >= 0
+        b.lastBalanceShow = this.cents2dollars(b.lastBalance);
+        b.balanceShow = this.cents2dollars(b.acc_balance);
+        b.monthBalanceShow = this.cents2dollars(b.monthBalance);
+        b.debitsShow = this.cents2dollars(b.debits);
+        b.creditsShow = this.cents2dollars(b.credits);
+
+        if(b.currency !== this.principalCurrency) {
+          b.lastBalanceCurrencyShow = this.cents2dollars(b.lastBalanceCurrency, b.currency, true);
+          b.balanceCurrencyShow = this.cents2dollars(b.acc_balanceCurrency, b.currency, true);
+          b.monthBalanceCurrencyShow = this.cents2dollars(b.monthBalanceCurrency, b.currency, true);
+          b.debitsCurrencyShow = this.cents2dollars(b.debitsCurrency, b.currency, true);
+          b.creditsCurrencyShow = this.cents2dollars(b.creditsCurrency, b.currency, true);
+        }
+
+        balancesByType[type].total += b.monthBalance;
+        balancesByType[type].total_green = BigInt(balancesByType[type].total) >= 0;
+        balancesByType[type].totalShow = this.cents2dollars(balancesByType[type].total);
         balancesByType[type].balances.push(b)
       }
       return balancesByType

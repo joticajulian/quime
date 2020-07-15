@@ -20,13 +20,15 @@
               }">{{item.badge}}</div>
             </div>
           </div>
+          <div class="description">{{item.description}}</div>
           <div class="record-info1">
             <div class="icon" v-bind:style="{ backgroundImage: 'url(' + item.image_debit + ')' }"></div>
             <div class="icon" v-bind:style="{ backgroundImage: 'url(' + item.image_credit + ')' }"></div>
-            <div class="description">{{item.description}}</div>
           </div>
           <div class="record-info2">
             <div class="amount">{{item.amountShow}}</div>
+            <div v-if="item.foreignCurrencyDebit" class="foreign-amount">{{item.amountDebitShow}}</div>
+            <div v-if="item.foreignCurrencyCredit" class="foreign-amount">{{item.amountCreditShow}}</div>
             <div class="accumulated">{{item.balanceShow}}</div>
           </div>
         </li>
@@ -49,11 +51,7 @@ export default {
       type: Array,
       default: () => ([]),
     },
-    currencies: {
-      type: Array,
-      default: () => ([]),
-    },
-    principalCurrency: {
+    refAccount: {
       type: String,
       default: "",
     }
@@ -97,14 +95,15 @@ export default {
         r.foreignCurrencyDebit = !!r.amountDebit;
         r.foreignCurrencyCredit = !!r.amountCredit;
 
-        r.amountShow = this.cents2dollars(r.amount);
-        r.balanceShow = this.cents2dollars(r.balance);
+        const showCurrency = r.foreignCurrencyDebit || r.foreignCurrencyCredit;
+        r.amountShow = this.cents2dollars(r.amount, undefined, showCurrency);
+        r.balanceShow = this.cents2dollars(r.balance, undefined, showCurrency);
 
         if(r.foreignCurrencyDebit)
-          r.amountDebitShow = this.cents2dollars(r.amountDebit, accountDebit.currency);
+          r.amountDebitShow = this.cents2dollars(r.amountDebit, accountDebit.currency, true);
 
         if(r.foreignCurrencyCredit)
-          r.amountCreditShow = this.cents2dollars(r.amountCredit, accountCredit.currency);
+          r.amountCreditShow = this.cents2dollars(r.amountCredit, accountCredit.currency, true);
 
         // icons
         r.image_debit  = accountDebit.logo;

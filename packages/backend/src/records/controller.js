@@ -151,12 +151,18 @@ function newAccountBalance(account){
     account_type: account.type,
     currency: account.currency,
     precision:account.precision,
-    debits: 0n,
-    credits: 0n,
+    debits: 0n, // debits in the principal currency
+    credits: 0n, // credits in the principal currency
+    debitsCurrency: 0n,  // debits in the currency of the account
+    creditsCurrency: 0n, // credits in the currency of the account
     balance_debit: 0n,
     balance_credit:0n,
+    balance_debitCurrency: 0n,
+    balance_creditCurrency: 0n,
     balance: 0n,    // balance of the period
-    acc_balance: 0n // accumulated balance
+    balanceCurrency: 0n,
+    acc_balance: 0n, // accumulated balance
+    acc_balanceCurrency: 0n
   }
 }
 
@@ -199,31 +205,46 @@ function recalculateBalances(index){
   }
 
   for(var i in state.balances_by_period){
+    var currentPeriod = state.balances_by_period[i];
+    if(i>0) var lastPeriod = state.balances_by_period[i-1];
     for(var j=index; j<db.length; j++){
       var record = db[j]
-      if(record.date < state.balances_by_period[i].period.start ||
-         record.date > state.balances_by_period[i].period.end
+      if(record.date < currentPeriod.period.start ||
+         record.date > currentPeriod.period.end
       )
         continue
 
       var account_debit  = record.debit
       var account_credit = record.credit
 
-      var accountBalanceDebit  = state.balances_by_period[i].accounts.find( (b)=>{return b.account === account_debit})
-      var accountBalanceCredit = state.balances_by_period[i].accounts.find( (b)=>{return b.account === account_credit})
+      var accountBalanceDebit  = currentPeriod.accounts.find( (b)=>{return b.account === account_debit})
+      var accountBalanceCredit = currentPeriod.accounts.find( (b)=>{return b.account === account_credit})
       accountBalanceDebit.debits += BigInt(record.amount);
       accountBalanceCredit.credits += BigInt(record.amount);
+      if(record.amountDebit)
+        accountBalanceDebit.debitsCurrency += BigInt(record.amountDebit);
+      if(record.amountCredit)
+        accountBalanceCredit.creditsCurrency += BigInt(record.amountCredit);
     }
 
-    for(var j in state.balances_by_period[i].accounts){
-      var a = state.balances_by_period[i].accounts[j]
+    for(var j in currentPeriod.accounts){
+      var a = currentPeriod.accounts[j];
       a.balance = a.debits - a.credits
-      var lastBalance = 0n
-      if(i>0)
-        lastBalance = state.balances_by_period[i-1].accounts[j].acc_balance
-      a.acc_balance = a.balance + lastBalance
+      a.balanceCurrency = a.debitsCurrency - a.creditsCurrency;
+
+      if(i>0) {
+        a.lastBalance = lastPeriod.accounts[j].acc_balance
+        a.lastBalanceCurrency = lastPeriod.accounts[j].acc_balanceCurrency;
+      } else {
+        a.lastBalance = 0n
+        a.lastBalanceCurrency = 0n
+      }
+      a.acc_balance = a.balance + a.lastBalance;
+      a.acc_balanceCurrency = a.balanceCurrency + a.lastBalanceCurrency;
       if(a.balance >= 0) a.balance_debit = a.balance
       else a.balance_credit = -a.balance
+      if(a.balanceCurrency >= 0) a.balance_debitCurrency = a.balanceCurrency;
+      else a.balance_creditCurrency = -a.balanceCurrency;
     }
   }
   save(['state'])

@@ -169,13 +169,15 @@ export default {
      *  precision 6: "12.345" --> "12345000"
      */
     parseAmount(amount, currency) {
-      console.log(currency)
       const {precision} = this.currencies.find((c) => (c.name === currency));
-      console.log(this.currencies)
       if(!precision)
         throw new Error("Error retrieving precision in currencies")
-      console.log(`precision of ${currency} is ${precision}`)
-      let [integer, decimals] = amount.split(".");
+      if(isNaN(Number(amount)))
+        throw new Error("The amount can not be parsed")
+      if(Number(amount) < 0)
+        throw new Error("Negative numbers are not allowed. Consider swap credit and debit accounts");
+
+      let [integer, decimals] = amount.trim().split(".");
       if(!decimals) decimals = "";
       decimals = decimals.substring(0, precision);
       decimals += "0".repeat(precision - decimals.length);
