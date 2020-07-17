@@ -44,12 +44,18 @@
         <button class="btn btn-danger" @click="openModalConfirmDelete">Remove</button>
       </div>
     </div>
+    <div class ="mt-2">
+      <div v-if="alert.info" class="alert alert-info" role="alert">{{alert.infoText}}</div>
+      <div v-if="alert.success" class="alert alert-success" role="alert" v-html="alert.successText"></div>
+      <div v-if="alert.danger"  class="alert alert-danger" role="alert">{{alert.dangerText}}</div>
+    </div>
   </div>
 </template>
 
 <script>
 import axios from 'axios'
 import config from '@/config'
+import Alerts from '@/mixins/Alerts'
 
 let callApi;
 
@@ -97,6 +103,10 @@ export default {
     };
   },
 
+  mixins:[
+    Alerts,
+  ],
+
   created(){
     const token = localStorage.getItem("JWT");
     callApi = axios.create({
@@ -108,6 +118,7 @@ export default {
 
   mounted() {
     this.renderForm();
+    this.hideAlerts();
   },
 
   watch: {
@@ -171,9 +182,14 @@ export default {
     parseAmount(amount, currency) {
       const {precision} = this.currencies.find((c) => (c.name === currency));
       if(!precision)
-        throw new Error("Error retrieving precision in currencies")
+        throw new Error("Error retrieving precision in currencies");
+
+      if(!amount)
+        throw new Error(`Define amount. Received: '${amount}'`)
+
       if(isNaN(Number(amount)))
-        throw new Error("The amount can not be parsed")
+        throw new Error(`The amount can not be parsed. Received: '${amount}'`)
+
       if(Number(amount) < 0)
         throw new Error("Negative numbers are not allowed. Consider swap credit and debit accounts");
 
@@ -189,47 +205,53 @@ export default {
       let credit;
       let amountDebit;
       let amountCredit;
-
-      const amount = this.parseAmount(this.amount, this.principalCurrency);
-      const amount1Parsed = this.parseAmount(this.amount1, this.currency1);
-      const amount2Parsed = this.parseAmount(this.amount2, this.currency2);
-
-      if (this.type === "ingreso" || this.type === "otro") {
-        debit = this.account1;
-        credit = this.account2;
-
-        if(this.foreignCurrency1) amountDebit = amount1Parsed;
-        if(this.foreignCurrency2) amountCredit = amount2Parsed;
-      } else if(this.type === "gasto" || this.type === "movimiento") {
-        debit = this.account2;
-        credit = this.account1;
-
-        if(this.foreignCurrency2) amountDebit = amount2Parsed;
-        if(this.foreignCurrency1) amountCredit = amount1Parsed;
-      } else {
-        throw new Error(`There are no instructions for type '${this.type}'`);
-      }
-    
-      const record = {
-        date: new Date(this.date+'T00:00:00Z').getTime(),
-        description: this.description,
-        debit,
-        credit,
-        amount,
-        amountDebit,
-        amountCredit,
-      };
-
-      console.log(record)
-      
-      /*const id = "";
-      if(this.modalType === 'update') id = this.modalRecord.id;*/
-
       try{
+        const amount = this.parseAmount(this.amount, this.principalCurrency);
+      
+        if (this.type === "ingreso" || this.type === "otro") {
+          debit = this.account1;
+          credit = this.account2;
+
+          if(this.foreignCurrency1)
+            amountDebit = this.parseAmount(this.amount1, this.currency1);
+          if(this.foreignCurrency2)
+            amountCredit = this.parseAmount(this.amount2, this.currency2);
+
+        } else if(this.type === "gasto" || this.type === "movimiento") {
+          debit = this.account2;
+          credit = this.account1;
+
+          if(this.foreignCurrency2)
+            amountDebit = this.parseAmount(this.amount2, this.currency2);
+          if(this.foreignCurrency1)
+            amountCredit = this.parseAmount(this.amount1, this.currency1);
+
+        } else {
+          throw new Error(`There are no instructions for type '${this.type}'`);
+        }
+    
+        const record = {
+          date: new Date(this.date+'T00:00:00Z').getTime(),
+          description: this.description,
+          debit,
+          credit,
+          amount,
+          amountDebit,
+          amountCredit,
+        };
+
+        console.log(record)
+        if(isNaN(record.date))
+          throw new Error(`Invalid date ${this.date}. Use the format YYYY-mm-dd`);
+      
+        /*const id = "";
+        if(this.modalType === 'update') id = this.modalRecord.id;*/
+
         var result = await callApi.put("/", record)
         console.log("updated")
         this.$emit("updated");
       }catch(error){
+        console.log("show danger")
         this.showDanger(error.message)
         throw error
       }

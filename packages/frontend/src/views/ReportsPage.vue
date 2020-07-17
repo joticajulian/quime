@@ -50,13 +50,12 @@
               <div class="card mb-4">
                 <ul class="list-group list-group-flush">
                   <li v-for="(item,index2) in balance_group.balances" :key="index2" class="list-group-item" @click="selectAccount(type,index2)">
-                    <div v-if="type === 'incomes' || type === 'expenses'" class="row">
-                      <div class="col-6">{{item.account}}</div>
-                      <div class="col-6 text-right" :class="{'text-success':item.green, 'text-danger':!item.green}">{{item.monthBalanceShow}}</div>
-                    </div>
-                    <div v-else class="row">
+                    <div class="row">
                       <div class="col-6">{{item.account}}</div>
                       <div class="col-6 text-right" :class="{'text-success':item.green, 'text-danger':!item.green}">{{item.balanceShow}}</div>
+                      <div v-if="item.currency !== principalCurrency"
+                        class="col-12 text-right foreign-amount" :class="{'text-success':item.green, 'text-danger':!item.green}"
+                      >{{item.balanceCurrencyShow}}</div>
                     </div>
                   </li>
                   <li class="list-group-item">
@@ -416,37 +415,39 @@ export default{
         if(BigInt(b.debits) == 0 && BigInt(b.credits) == 0
           && (b.account_type === 'income' || b.account_type === 'expense')) continue
         var type = plural(b.account_type)
+        let monthBalance;
+        let totalBalance;
         switch(b.account_type){
           case 'asset':
           case 'liability':
-            b.green = BigInt(b.acc_balance) >= 0
-            b.monthBalance = BigInt(b.balance);
-            b.monthBalanceCurrency = BigInt(b.balanceCurrency);
+            b.green = BigInt(b.acc_balance) >= 0            
+            b.balanceShow = this.cents2dollars(b.acc_balance);
+            if(b.currency !== this.principalCurrency)
+              b.balanceCurrencyShow = this.cents2dollars(b.acc_balanceCurrency, b.currency, true);
+            balancesByType[type].total += BigInt(b.acc_balance);
             break
           case 'income':
           case 'expense':
             b.green = BigInt(b.balance) < 0
             b.monthBalance = -BigInt(b.balance);
-            b.monthBalanceCurrency = -BigInt(b.balanceCurrency);
+            b.balanceShow = this.cents2dollars(b.monthBalance);
+            if(b.currency !== this.principalCurrency)
+              b.balanceCurrencyShow = this.cents2dollars(-BigInt(b.balanceCurrency), b.currency, true);
+            balancesByType[type].total += BigInt(b.monthBalance);
             break
           default:
             break
         }
         b.lastBalanceShow = this.cents2dollars(b.lastBalance);
-        b.balanceShow = this.cents2dollars(b.acc_balance);
-        b.monthBalanceShow = this.cents2dollars(b.monthBalance);
         b.debitsShow = this.cents2dollars(b.debits);
         b.creditsShow = this.cents2dollars(b.credits);
 
         if(b.currency !== this.principalCurrency) {
           b.lastBalanceCurrencyShow = this.cents2dollars(b.lastBalanceCurrency, b.currency, true);
-          b.balanceCurrencyShow = this.cents2dollars(b.acc_balanceCurrency, b.currency, true);
-          b.monthBalanceCurrencyShow = this.cents2dollars(b.monthBalanceCurrency, b.currency, true);
           b.debitsCurrencyShow = this.cents2dollars(b.debitsCurrency, b.currency, true);
           b.creditsCurrencyShow = this.cents2dollars(b.creditsCurrency, b.currency, true);
         }
 
-        balancesByType[type].total += b.monthBalance;
         balancesByType[type].total_green = BigInt(balancesByType[type].total) >= 0;
         balancesByType[type].totalShow = this.cents2dollars(balancesByType[type].total);
         balancesByType[type].balances.push(b)
