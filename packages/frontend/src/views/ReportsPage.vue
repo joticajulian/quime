@@ -5,6 +5,7 @@
         :accounts="accounts"
         :currencies="currencies"
         :principalCurrency="principalCurrency"
+        :record="modalRecord"
         @updated="recordUpdated"
       ></FormRecord>
     </b-modal>
@@ -94,10 +95,11 @@
                 :records="currentRecords"
                 :accounts="accounts"
                 :refAccount="currentBalance.account"
+                @onClick="openModalUpdate($event)"
               ></ListRecords>
             </div>
           </div>
-          <button class="btn btn-primary mt-3 mb-3 mr-3" @click="openModalUpdate(null, 0, 'insert')">Insert</button>
+          <button class="btn btn-primary mt-3 mb-3 mr-3" @click="openModalUpdate()">Insert</button>
           <div class="custom-file">            
             <input type="file" class="custom-file-input" id="input_file" :class="{'is-invalid': error.file }"/>
             <label class="custom-file-label" for="input_file">Choose file...</label>
@@ -253,34 +255,26 @@ export default{
       this.selectAccount( this.current_selection.type, this.current_selection.index )
     },
 
-    openModalUpdate(item, index, operation='update'){
-      this.modalType = operation
-      if(operation === 'insert'){
-        this.modalTitle = 'Nuevo registro'
-        item = {
+    openModalUpdate(item){
+      let record = item;
+      if(record){
+        this.modalType = "update";
+        this.modalTitle = 'Modificar'
+      }else{
+        this.modalType = "insert";
+        this.modalTitle = 'Nuevo registro';
+        record = {
           id: null,
-          date_transaction: new Date().toISOString().slice(0,-14),
+          date: new Date().getTime(),
           description: '',
           debit: '',
           credit: '',
-          amount: 0
+          amount: 0,
         }
-      }else if(operation === 'update'){
-        this.modalTitle = 'Modificar'
-      }else{
-        throw new Error(`The operation '${operation}}' is not valid`)
       }
 
       this.$refs.modalEditRecord.show()
-      this.modalRecord = {
-        id:   item.id,
-        date: item.date_transaction,
-        description: item.description,
-        debit: item.debit,
-        credit: item.credit,
-        amount: item.amount,
-        type: 'otro'
-      }
+      this.modalRecord = record;
     },
 
     openModalConfirmDelete(){

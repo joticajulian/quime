@@ -8,7 +8,7 @@
     </div>
     <div class="card mb-4">
       <ul class="list-group list-group-flush">
-        <li v-for="(item, index) in recordsShow" :key="index" class="list-group-item">
+        <li v-for="(item, index) in recordsShow" :key="index" class="list-group-item"  @click="onClick(item)">
           <div>
             <div class="record-info3">{{item.dateString}}</div>
             <div class="record-info4">
@@ -78,6 +78,10 @@ export default {
   },
   
   methods: {
+    onClick(item) {
+      this.$emit("onClick", item);
+    },
+
     elaborateRecords() { 
       const records = this.records;
 

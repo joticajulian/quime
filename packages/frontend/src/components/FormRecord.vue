@@ -56,6 +56,7 @@
 import axios from 'axios'
 import config from '@/config'
 import Alerts from '@/mixins/Alerts'
+import Utils from "@/mixins/Utils"
 
 let callApi;
 
@@ -74,11 +75,16 @@ export default {
     principalCurrency: {
       type: String,
       default: "",
+    },
+    record: {
+      type: Object,
+      default: {}
     }
   },
   
   data() {
     return {
+      id: null,
       date: "",
       description: "",
       account1: "",
@@ -105,6 +111,7 @@ export default {
 
   mixins:[
     Alerts,
+    Utils,
   ],
 
   created(){
@@ -117,6 +124,7 @@ export default {
   },
 
   mounted() {
+    this.loadRecord();
     this.renderForm();
     this.hideAlerts();
   },
@@ -126,18 +134,69 @@ export default {
       this.renderForm();
     },
     account1: function () {
-      const account = this.accounts.find((a)=>(a.name === this.account1));
-      this.foreignCurrency1 = (account.currency !== this.principalCurrency);
-      this.currency1 = account.currency;
+      const currency = this.getCurrency(this.account1);
+      this.foreignCurrency1 = currency.foreign;
+      this.currency1 = currency.name;
     },
     account2: function () {
-      const account = this.accounts.find((a)=>(a.name === this.account2));
-      this.foreignCurrency2 = (account.currency !== this.principalCurrency);
-      this.currency2 = account.currency;
+      const currency = this.getCurrency(this.account2);
+      this.foreignCurrency2 = currency.foreign;
+      this.currency2 = currency.name;
     },
   },
 
   methods: {
+    getCurrency(accountName) {
+      const account = this.accounts.find((a)=>(a.name === accountName));
+      return {
+        name: account.currency,
+        foreign: account.currency !== this.principalCurrency,
+      };
+    },
+
+    loadRecord() {
+      this.id = this.record.id;
+      this.date = new Date(this.record.date).toISOString().slice(0,-14);
+      this.description = this.record.description;
+      this.amount = this.cents2dollars(this.record.amount);
+
+      this.type = "otro"
+      if (this.type === "ingreso" || this.type === "otro") {
+        this.account1 = this.record.debit;
+        this.account2 = this.record.credit;
+
+        const currency1 = this.getCurrency(this.account1);
+        this.foreignCurrency1 = currency1.foreign;
+        this.currency1 = currency1.name;
+
+        const currency2 = this.getCurrency(this.account2);
+        this.foreignCurrency2 = currency2.foreign;
+        this.currency2 = currency2.name;
+
+        if(this.foreignCurrency1)
+          this.amount1 = this.cents2dollars(this.record.amountDebit, this.currency1);
+        if(this.foreignCurrency2)
+          this.amount2 = this.cents2dollars(this.record.amountCredit, this.currency2);
+
+      } else if(this.type === "gasto" || this.type === "movimiento") {
+        this.account2 = this.record.debit;
+        this.account1 = this.record.credit;
+
+        const currency1 = this.getCurrency(this.account1);
+        this.foreignCurrency1 = currency1.foreign;
+        this.currency1 = currency1.name;
+
+        const currency2 = this.getCurrency(this.account2);
+        this.foreignCurrency2 = currency2.foreign;
+        this.currency2 = currency2.name;
+
+        if(this.foreignCurrency2)
+          this.amount2 = this.cents2dollars(this.record.amountDebit, this.currency2);
+        if(this.foreignCurrency1)
+          this.amount1 = this.cents2dollars(this.record.amountCredit, this.currency1);
+      }
+    },
+
     renderForm() {
       switch(this.type) {
         case "ingreso":
@@ -244,11 +303,13 @@ export default {
         if(isNaN(record.date))
           throw new Error(`Invalid date ${this.date}. Use the format YYYY-mm-dd`);
       
-        /*const id = "";
-        if(this.modalType === 'update') id = this.modalRecord.id;*/
-
-        var result = await callApi.put("/", record)
+        let response;
+        if(this.id)
+          response = await callApi.put(`/${this.id}`, record);
+        else
+          response = await callApi.put("/", record);
         console.log("updated")
+        console.log(response.data);
         this.$emit("updated");
       }catch(error){
         console.log("show danger")
