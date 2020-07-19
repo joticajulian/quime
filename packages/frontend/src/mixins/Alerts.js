@@ -44,6 +44,12 @@ export default {
     hideDanger() {
       this.alert.danger = false
       this.alert.dangerText = ''
-    }
+    },
+
+    hideAlerts() {
+      this.hideSuccess();
+      this.hideDanger();
+      this.hideInfo();
+    },
   }
 }

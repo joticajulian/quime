@@ -1,12 +1,22 @@
-/**
- * Module to interpret the CSV files of Spuerkeess Bank
- * Author: Julian Gonzalez
- * License: MIT
- */
+const logger = require("../logger");
+const uuidv1 = require('uuid/v1');
+const firebase = require('firebase-admin');
+const config = require("../config");
 
-const fs = require('fs')
-const uuidv1 = require('uuid/v1')
-const Accounts = require('./accounts')
+const refAccounts = firebase.firestore().collection(config.collection).doc('accounts');
+
+let accounts;
+let estimations;
+
+async function loadAccounts() {
+   const docAccounts = await refAccounts.get();
+   const data = docAccounts.data();
+   if(!data.accounts) throw new Error("Accounts can not be loaded from firebase");
+   accounts = data.accounts;
+
+   if(!data.estimations) throw new Error("Estimation of accounts can not be loaded from firebase");
+   estimations = data.estimations;
+}
 
 const expectedTitles1 = [
   'Date transaction',
@@ -121,7 +131,7 @@ const titles3 = [
 
 function verifyTitles(fields, option) {
   if(!option) option = 1
-  console.log(`number of titles: ${fields.length}`)
+  logger.info(`number of titles: ${fields.length}`)
 
   if(option == 1){
     if(fields.length != expectedTitles1.length)
@@ -178,6 +188,28 @@ function equalRecord(a,b){
   return true
 }
 
+function estimateAccount(r) {
+  if(!estimations || !Array.isArray(estimations) || estimations.length === 0)
+    throw new Error("'estimation' must be an array of at least 1 item");
+
+  for(let i=0; i<estimations.length; i+=1) {
+    const e = estimations[i];
+
+    // estimation by description
+    if(e.description && r.description.includes(e.description))
+      return e.resolve;
+
+    // estimation by amount
+    if(e.amount === "positive" && r.amount > 0)
+      return e.resolve;
+
+    // default estimation
+    if(!e.description && !e.amount)
+      return e.resolve;
+  }
+  throw new Error("accounts could not be estimated, and there in no default value defined");
+}
+
 function parseRecord(data,option) {
   var record = {id:uuidv1()}
   var titles = titles1
@@ -189,7 +221,13 @@ function parseRecord(data,option) {
         var value = data[i].trim().replace(/ +(?= )/g,'').toLowerCase()
         break
       case 'number':
-        var value = parseFloat(data[i].replace(',','.'))
+        // value as integer (we assume precision 2, for EUR)
+        const precision = 2;
+        let [integer, decimals] = data[i].split(",");
+        if(!decimals) decimals = "";
+        decimals = decimals.substring(0, precision);
+        decimals += "0".repeat(precision - decimals.length);
+        value = integer + decimals;
         break
       case 'date':
         var aux = data[i].split('/')
@@ -201,32 +239,35 @@ function parseRecord(data,option) {
     }
     record[titles[i].name] = value
   }
-  var account = Accounts.estimateAccount(record)
+
+  var account = estimateAccount(record)
   record.date = new Date(record.date_transaction+'Z').getTime()
-  if(record.amount >= 0){
+  if(BigInt(record.amount) >= 0){
     record.debit = account.debit
     record.credit = account.credit
   }else{
-    record.amount = -record.amount //store only positive number, then the relation debit/credit changes
+    //store only positive number, then the relation debit/credit changes
+    record.amount = (-BigInt(record.amount)).toString();
     record.debit = account.credit
     record.credit = account.debit
   }
   return record
 }
 
-function readCSV(filename, option) {
+async function parse(data, option) {
+  await loadAccounts();
+
   if(!option) option = 1
-  var data = fs.readFileSync(filename, 'utf8')
   var lines = data.split('\n')
   var records = []
-  console.log(`number of lines: ${lines.length}`)
-  for(var i in lines){
+  logger.info(`number of lines: ${lines.length}`)
+  for(let i=0; i<lines.length; i+=1){
     try{
       var line = lines[i]
       var fields = line.split(';')
-      if(i==0){
+      if(i===0){
         verifyTitles(fields,option)
-        console.log(`good titles option ${option}`)
+        logger.info(`good titles option ${option}`)
         continue
       }
       if(option == 1 && fields.length < expectedTitles1.length)
@@ -238,7 +279,7 @@ function readCSV(filename, option) {
       var record = parseRecord(fields, option)
       records.push(record)
     }catch(error){
-      console.log(`Error in file '${filename}', line ${i}`)
+      logger.info(`Error in line ${i}`)
       throw error
     }
   }
@@ -247,5 +288,5 @@ function readCSV(filename, option) {
 
 module.exports = {
   equalRecord,
-  readCSV
+  parse,
 }
