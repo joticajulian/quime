@@ -1,9 +1,5 @@
 node_modules/
 dist/
 *.csv
-#accounts.js
-
-#db.json
-#state.json
 
 .env
