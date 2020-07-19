@@ -8,7 +8,7 @@ const config = {
   password: process.env.PASSWORD,
   testMode: process.env.TEST_MODE,
   frontend: {
-    public: "../../frontend/public"
+    public: "../../packages/frontend/dist"
   },
   privKeyJWK: jose.JWK.generateSync("EC", "secp256k1"),
   databaseURL: process.env.DATABASE_URL,
