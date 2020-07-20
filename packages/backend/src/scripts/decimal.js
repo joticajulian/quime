@@ -17,6 +17,7 @@
 
 const fs = require('fs');
 const path = require("path");
+const { isArray } = require('util');
 
 const [type, inputFile, outputFile] = process.argv.slice(2)
 
@@ -28,27 +29,36 @@ if(!type || !inputFile) {
 const raw = fs.readFileSync(inputFile, "utf-8");
 const db = JSON.parse(raw);
 
-if( !db || !db.records ){
+if( !db ){
   console.log(db);
-  console.log("db.records does not exist");
+  console.log("db does not exist");
+  return;
+}
+
+if( db.records )
+  db = db.records;
+
+if(!isArray(db)) {
+  console.log(db);
+  console.log("the array is not on db or db.records")
   return;
 }
 
 function toInt() {
   let floatFound = false;
-  db.records.forEach(r => {
+  db.forEach(r => {
     if(typeof r.amount !== "number")
       throw new Error(`this amount is not a number but a ${typeof r.amount}: ${r.amount}`);
     if(r.amount % 1 !== 0)
       floatFound = true;
-    r.amount = parseInt( 100 * r.amount );
+    r.amount = Math.round( 100 * r.amount );
   });
   if(!floatFound)
     console.log("Warning: Float numbers were expected, but the file only contain integers");
 }
 
 function toFloat() {
-  db.records.forEach(r => {
+  db.forEach(r => {
     if(typeof r.amount !== "number")
       throw new Error(`this amount is not a number but a ${typeof r.amount}: ${r.amount}`);
     if(r.amount % 1 !== 0)

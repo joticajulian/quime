@@ -19,7 +19,7 @@ async function download() {
   }
   fs.writeFile(file, JSON.stringify(doc.data().records), function(err){
     if(err) throw err;
-    console.log(`File saved in ${file}!`)
+    console.log(`File saved in ${file} from collection ${config.collection}`)
   });
 }
 
