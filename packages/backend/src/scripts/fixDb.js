@@ -10,7 +10,7 @@ const [fileFixes] = process.argv.slice(2)
 
 let dataFixes;
 if(fileFixes) {
-  dataFixes = fs.readFileSync(file, 'utf-8')
+  dataFixes = fs.readFileSync(fileFixes, 'utf-8')
 }
 
 function getFilenameNoExist(input) {
@@ -57,17 +57,6 @@ async function fixDb() {
       errors.push(`date changed from ${date} to 0`);
     }
 
-    const accountDebit = accounts.find( (a)=>{return a.name === debit});
-    const accountCredit = accounts.find( (a)=>{return a.name === credit});
-
-    if(!accountDebit) {
-      errors.push(`debit account '${debit}' not found in the list`);
-    }
-
-    if(!accountCredit) {
-      errors.push(`debit account '${credit}' not found in the list`);
-    }
-
     if(!id) {
       id = uuidv1();
     }
@@ -81,16 +70,31 @@ async function fixDb() {
       amount = Number(amount).toString();
     }
 
-    if(accountDebit.currency === principalCurrency)
-      amountDebit = undefined;
-    else if(typeof amountDebit === "number") {
-      amountDebit = Number(amountDebit).toString();
+    const accountDebit = accounts.find( (a)=>{return a.name === debit});
+    const accountCredit = accounts.find( (a)=>{return a.name === credit});
+
+    if(!accountDebit) {
+      errors.push(`debit account '${debit}' not found in the list`);
+    } else {
+      if(accountDebit.currency === principalCurrency)
+        amountDebit = undefined;
+      else if(!amountDebit)
+        errors.push(`amountDebit not defined. Its currency is ${accountDebit.currency}`)
+      else if(typeof amountDebit === "number") {
+        amountDebit = BigInt(amountDebit).toString();
+      }
     }
 
-    if(accountCredit.currency === principalCurrency)
-      amountCredit = undefined;
-    else if(typeof amountCredit === "number") {
-      amountCredit = Number(amountCredit).toString();
+    if(!accountCredit) {
+      errors.push(`debit account '${credit}' not found in the list`);
+    } else {
+      if(accountCredit.currency === principalCurrency)
+        amountCredit = undefined;
+      else if(!amountCredit)
+        errors.push(`amountCredit not defined. Its currency is ${accountCredit.currency}`)
+      else if(typeof amountCredit === "number") {
+        amountCredit = BigInt(amountCredit).toString();
+      }
     }
 
     const record = {

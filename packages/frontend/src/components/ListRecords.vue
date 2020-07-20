@@ -76,6 +76,10 @@ export default {
       this.orderList()
     }
   },
+
+  mounted() {
+    this.elaborateRecords();
+  },
   
   methods: {
     onClick(item) {
@@ -83,7 +87,7 @@ export default {
     },
 
     elaborateRecords() { 
-      const records = this.records;
+      const records = JSON.parse(JSON.stringify(this.records));
 
       let accumulated = BigInt(0);
       records.forEach((r) => {

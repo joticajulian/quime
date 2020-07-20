@@ -18,7 +18,7 @@ function upload() {
   console.log(`type of db ${typeof db}`)
   console.log(`db has ${db.length} records`)
   refFirestore.doc('db').set({records: db})
-  console.log(`${file} with ${db.length} records has been set in firebase`)
+  console.log(`${file} with ${db.length} records has been set in firebase. collection ${config.collection}`)
 }
 
 upload();
