@@ -1,6 +1,13 @@
+<template>
+  <div class="mt-4">
+    <div v-if="alert.info" class="alert alert-info" role="alert">{{alert.infoText}}</div>
+    <div v-if="alert.success" class="alert alert-success" role="alert" v-html="alert.successText"></div>
+    <div v-if="alert.danger"  class="alert alert-danger" role="alert">{{alert.dangerText}}</div>
+  </div>
+</template>
 
+<script>
 export default {
-  
   data: function(){
     return {
       alert: {
@@ -53,3 +60,4 @@ export default {
     },
   }
 }
+</script>

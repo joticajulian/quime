@@ -6,20 +6,10 @@
         :currencies="currencies"
         :principalCurrency="principalCurrency"
         :record="modalRecord"
-        @updated="recordUpdated"
+        @onInsert="recordUpdated('Record inserted')"
+        @onUpdate="recordUpdated('Record updated')"
+        @onDelete="recordUpdated('Record deleted')"
       ></FormRecord>
-    </b-modal>
-
-    <b-modal ref="modalConfirmDelete" hide-footer title="Borrar">
-      <p>¿Seguro que desea borrar? Luego no es posible deshacer</p>
-      <div class="row mt-4">
-        <div class="col-8">
-          <button class="btn btn-block btn-primary" @click="cancelDelete">Cancelar</button>
-        </div>
-        <div class="col-4">
-          <button class="btn btn-danger" @click="confirmDelete">Borrar</button>
-        </div>
-      </div>
     </b-modal>
 
     <b-modal ref="modalUpload" hide-footer title="Leer archivo">
@@ -106,9 +96,7 @@
             <div v-if="error.file" class="invalid-feedback">{{ errorText.file }}</div>
             <button class="btn btn-primary mt-3 mb-3 mr-3" @click="uploadFile">Upload</button>
           </div>
-          <div v-if="alert.info" class="alert alert-info" role="alert">{{alert.infoText}}</div>
-          <div v-if="alert.success" class="alert alert-success" role="alert" v-html="alert.successText"></div>
-          <div v-if="alert.danger"  class="alert alert-danger" role="alert">{{alert.dangerText}}</div>
+          <Alerts ref="alerts"></Alerts>
         </div>
       </div>
     </div>
@@ -123,8 +111,9 @@ import axios from 'axios'
 import AppHeader from '@/components/AppHeader'
 import ListRecords from '@/components/ListRecords'
 import FormRecord from "@/components/FormRecord"
+import Alerts from "@/components/Alerts"
 import config from '@/config'
-import Alerts from '@/mixins/Alerts'
+//import Alerts from '@/mixins/Alerts'
 import Utils from "@/mixins/Utils"
 
 let callApi;
@@ -215,10 +204,10 @@ export default{
     AppHeader,
     ListRecords,
     FormRecord,
+    Alerts,
   },
 
   mixins:[
-    Alerts,
     Utils,
   ],
 
@@ -277,53 +266,27 @@ export default{
       this.modalRecord = record;
     },
 
-    openModalConfirmDelete(){
-      this.$refs.modalConfirmDelete.show()
-    },
-
     async insertRecords(records) {
+      console.log("insert records")
+      console.log(records)
       this.hideSuccess()
       this.hideDanger()
       
       try{
         var result = await callApi.put("/", records);
         console.log(result.data)
-        this.showSuccess('Records inserted');
+        this.$refs.alerts.showSuccess('Records inserted');
         this.load()
       }catch(error){
-        this.showDanger(error.message)
+        this.$refs.alerts.showDanger(error.message)
         throw error
       }
     },
 
-    recordUpdated() {
-      this.showSuccess('Record updated');
+    recordUpdated(message) {
+      this.$refs.alerts.showSuccess(message);
       this.$refs.modalEditRecord.hide();
       this.load();
-    },
-
-    async removeRecord(){
-      if(this.modalType === 'insert') return
-      if(this.modalType === 'update'){
-        try{
-          const id = this.modalRecord.id;
-          var result = await callApi.delete("/" + id);
-          this.showSuccess('Record removed')
-          this.$refs.modalEditRecord.hide()
-          this.load()
-        }catch(error){
-          this.showDanger(error.message)
-          throw error
-        }
-      }
-    },
-
-    confirmDelete(){
-      this.$refs.modalConfirmDelete.hide()
-      this.removeRecord()
-    },
-    cancelDelete(){
-      this.$refs.modalConfirmDelete.hide()
     },
 
     async uploadFile() {
