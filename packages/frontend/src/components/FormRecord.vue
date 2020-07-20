@@ -1,5 +1,17 @@
 <template>
   <div>
+    <b-modal ref="modalConfirmDelete" hide-footer title="Borrar">
+      <p>¿Seguro que desea borrar? Luego no es posible deshacer</p>
+      <div class="row mt-4">
+        <div class="col-8">
+          <button class="btn btn-block btn-primary" @click="cancelDelete">Cancelar</button>
+        </div>
+        <div class="col-4">
+          <button class="btn btn-danger" @click="confirmDelete">Borrar</button>
+        </div>
+      </div>
+    </b-modal>
+
     <select class="form-control" v-model="type">
       <option>ingreso</option>
       <option>gasto</option>
@@ -44,18 +56,14 @@
         <button class="btn btn-danger" @click="openModalConfirmDelete">Remove</button>
       </div>
     </div>
-    <div class ="mt-2">
-      <div v-if="alert.info" class="alert alert-info" role="alert">{{alert.infoText}}</div>
-      <div v-if="alert.success" class="alert alert-success" role="alert" v-html="alert.successText"></div>
-      <div v-if="alert.danger"  class="alert alert-danger" role="alert">{{alert.dangerText}}</div>
-    </div>
+    <Alerts ref="alerts"></Alerts>
   </div>
 </template>
 
 <script>
 import axios from 'axios'
 import config from '@/config'
-import Alerts from '@/mixins/Alerts'
+import Alerts from '@/components/Alerts'
 import Utils from "@/mixins/Utils"
 
 let callApi;
@@ -109,8 +117,11 @@ export default {
     };
   },
 
-  mixins:[
+  components: {
     Alerts,
+  },
+
+  mixins:[
     Utils,
   ],
 
@@ -126,7 +137,7 @@ export default {
   mounted() {
     this.loadRecord();
     this.renderForm();
-    this.hideAlerts();
+    this.$refs.alerts.hideAlerts();
   },
 
   watch: {
@@ -159,6 +170,12 @@ export default {
       this.date = new Date(this.record.date).toISOString().slice(0,-14);
       this.description = this.record.description;
       this.amount = this.cents2dollars(this.record.amount);
+
+      this.isUpdate = !!this.id;
+      if(this.isUpdate)
+        this.labelSave = "Update";
+      else
+        this.labelSave = "Insertar";
 
       this.type = "otro"
       if (this.type === "ingreso" || this.type === "otro") {
@@ -304,20 +321,46 @@ export default {
           throw new Error(`Invalid date ${this.date}. Use the format YYYY-mm-dd`);
       
         let response;
-        if(this.id)
+        let event;
+        if(this.isUpdate) {
           response = await callApi.put(`/${this.id}`, record);
-        else
+          event = "onUpdate";
+        } else {
           response = await callApi.put("/", record);
-        console.log("updated")
+          event = "onInsert";
+        }
         console.log(response.data);
-        this.$emit("updated");
+        this.$emit(event);
       }catch(error){
         console.log("show danger")
-        this.showDanger(error.message)
+        this.$refs.alerts.showDanger(error.message)
         throw error
       }
     },
-    openModalConfirmDelete() {},
+
+    async deleteRecord(){
+      try{
+        const response = await callApi.delete(`/${this.id}`);
+        console.log(response.data);
+        this.$emit("onDelete");
+      }catch(error){
+        this.$refs.alerts.showDanger(error.message)
+        throw error
+      }
+    },
+
+    openModalConfirmDelete(){
+      this.$refs.modalConfirmDelete.show()
+    },
+
+    confirmDelete(){
+      this.$refs.modalConfirmDelete.hide()
+      this.deleteRecord()
+    },
+
+    cancelDelete(){
+      this.$refs.modalConfirmDelete.hide()
+    },
   },
 }
 </script>
