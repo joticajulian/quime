@@ -347,6 +347,15 @@ async function parse(data) {
     return records;
   } catch(error) {
     logger.info("Not parsed with option 1: " + error.message);
+    logger.info("Trying option 4");
+  }
+
+  try{
+    const records = await csvParser.parse(data, 4);
+    return records;
+  } catch(error) {
+    logger.info("Not parsed with option 1: " + error.message);
+    console.log(error);
     throw new BadRequestError("Impossible to parse");
   }
 }

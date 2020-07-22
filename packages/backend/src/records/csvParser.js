@@ -128,35 +128,58 @@ const titles3 = [
   {name: 'city_to', type: 'string'},
 ]
 
+const expectedTitles4 = [
+  'Fecha tran',
+  'Referencia',
+  'Descripcion',
+  'Cargos Db',
+  'Pagos Cr',
+  'Saldo total',
+]
+
+const titles4 = [
+  {name: 'date_transaction', type: 'date'},
+  {name: 'referencia', type: 'string'},
+  {name: 'description', type: 'string'},
+  {name: 'cargos', type: 'number'},
+  {name: 'pagos', type: 'number'},
+  {name: 'saldo', type: 'number'},
+]
 
 function verifyTitles(fields, option) {
   if(!option) option = 1
   logger.info(`number of titles: ${fields.length}`)
 
-  if(option == 1){
+  if(option === 1){
     if(fields.length != expectedTitles1.length)
       throw new Error(`Number of titles: ${fields.length}. Expected: ${expectedTitles1.length}`)
-  }else if(option == 2){
+  }else if(option === 2){
     if(fields.length != expectedTitles2.length)
       throw new Error(`Number of titles: ${fields.length}. Expected: ${expectedTitles2.length}`)
-  }else if(option == 3){
+  }else if(option === 3){
     if(fields.length != expectedTitles3.length)
       throw new Error(`Number of titles: ${fields.length}. Expected: ${expectedTitles3.length}`)
+  }else if(option === 4){
+    if(fields.length != expectedTitles4.length)
+      throw new Error(`Number of titles: ${fields.length}. Expected: ${expectedTitles4.length}`)
   }else{
     throw new Error(`The optin ${option} for verify fields does not exist`)
   }
 
   for(var j in fields){
     fields[j] = fields[j].replace(/[^a-zA-Z0-9 ]/g, "")
-    if(option == 1){
+    if(option === 1){
       if( fields[j] !== expectedTitles1[j] )
         throw new Error(`The title '${fields[j]}' should be equal to '${expectedTitles1[j]}'`)
-    }else if(option == 2){
+    }else if(option === 2){
       if( fields[j] !== expectedTitles2[j] )
         throw new Error(`The title '${fields[j]}' should be equal to '${expectedTitles2[j]}'`)
-    }else if(option == 3){
+    }else if(option === 3){
       if( fields[j] !== expectedTitles3[j] )
         throw new Error(`The title '${fields[j]}' should be equal to '${expectedTitles3[j]}'`)
+    }else if(option === 4){
+      if( fields[j] !== expectedTitles4[j] )
+        throw new Error(`The title '${fields[j]}' should be equal to '${expectedTitles4[j]}'`)
     }else{
       throw new Error(`The optin ${option} for verify fields does not exist`)
     }
@@ -210,24 +233,37 @@ function estimateAccount(r) {
   throw new Error("accounts could not be estimated, and there in no default value defined");
 }
 
+function dollars2cents(a, precision=2) {
+  let amount = a;
+  let sign = "";
+
+  if(amount.startsWith("-")) {
+    sign = "-";
+    amount = amount.substring(1);
+  }
+
+  const separator = amount.includes(".") ? "." : ",";
+  let [integer, decimals] = amount.trim().split(separator);
+  if(!decimals) decimals = "";
+  decimals = decimals.substring(0, precision);
+  decimals += "0".repeat(precision - decimals.length);
+  return sign + integer + decimals;
+}
+
 function parseRecord(data,option) {
   var record = {id:uuidv1()}
   var titles = titles1
-  if(option == 2) titles = titles2
-  if(option == 3) titles = titles3
+  if(option === 2) titles = titles2
+  if(option === 3) titles = titles3
+  if(option === 4) titles = titles4
   for(var i in titles){
     switch(titles[i].type){
       case 'string':
         var value = data[i].trim().replace(/ +(?= )/g,'').toLowerCase()
         break
       case 'number':
-        // value as integer (we assume precision 2, for EUR)
-        const precision = 2;
-        let [integer, decimals] = data[i].split(",");
-        if(!decimals) decimals = "";
-        decimals = decimals.substring(0, precision);
-        decimals += "0".repeat(precision - decimals.length);
-        value = integer + decimals;
+        // value as integer (we assume precision 2, for EUR or USD)
+        value = dollars2cents(data[i], 2);
         break
       case 'date':
         var aux = data[i].split('/')
@@ -240,16 +276,27 @@ function parseRecord(data,option) {
     record[titles[i].name] = value
   }
 
+  if(option === 4) {
+    if(BigInt(record.cargos) !== 0n) record.amount = record.cargos;
+    if(BigInt(record.pagos) !== 0n) record.amount = record.pagos;
+    if(BigInt(record.cargos) !== 0n && BigInt(record.pagos) !== 0n)
+      throw new Error(`Pagos and Cargos defined in a single record: ${JSON.stringify(record)}`);
+  }
+
   var account = estimateAccount(record)
   record.date = new Date(record.date_transaction+'Z').getTime()
   if(BigInt(record.amount) >= 0){
     record.debit = account.debit
     record.credit = account.credit
+    //record.amountDebit = record.amount;
+    //record.amount = BigInt(Math.round(parseInt(record.amount) / 1.11)).toString()
   }else{
     //store only positive number, then the relation debit/credit changes
     record.amount = (-BigInt(record.amount)).toString();
     record.debit = account.credit
     record.credit = account.debit
+    //record.amountCredit = record.amount;
+    //record.amount = BigInt(Math.round(parseInt(record.amount) / 1.11)).toString()
   }
   return record
 }
@@ -270,16 +317,19 @@ async function parse(data, option) {
         logger.info(`good titles option ${option}`)
         continue
       }
-      if(option == 1 && fields.length < expectedTitles1.length)
+      if(option === 1 && fields.length < expectedTitles1.length)
         continue
-      else if(option == 2 && fields.length < expectedTitles2.length)
+      else if(option === 2 && fields.length < expectedTitles2.length)
         continue
-      else if(option == 3 && fields.length < expectedTitles3.length)
+      else if(option === 3 && fields.length < expectedTitles3.length)
+        continue
+      else if(option === 4 && fields.length < expectedTitles4.length)
         continue
       var record = parseRecord(fields, option)
       records.push(record)
     }catch(error){
       logger.info(`Error in line ${i}`)
+      logger.info(line)
       throw error
     }
   }
