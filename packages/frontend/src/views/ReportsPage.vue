@@ -269,8 +269,7 @@ export default{
     async insertRecords(records) {
       console.log("insert records")
       console.log(records)
-      this.hideSuccess()
-      this.hideDanger()
+      this.$refs.alerts.hideAlerts()
       
       try{
         var result = await callApi.put("/", records);
