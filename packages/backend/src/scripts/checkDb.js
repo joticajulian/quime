@@ -37,10 +37,6 @@ async function checkDb() {
     const accountDebit = accounts.find( (a)=>{return a.name === r.debit});
     const accountCredit = accounts.find( (a)=>{return a.name === r.credit});
 
-    if(!accountDebit)
-      errors.push(`debit account '${r.debit}' not found`);
-    if(!accountCredit)
-      errors.push(`Credit account '${r.credit}' not found`);
     if(!r.id)
       errors.push("No id");
     if(typeof r.date !== "number")
@@ -52,24 +48,32 @@ async function checkDb() {
     if(!isBigInt(r.amount))
       errors.push("amount must be bigint written as string");
 
-    if(accountDebit.currency === principalCurrency) {
-      if(r.amountDebit)
-        errors.push("amountDebit should not be defined");
-    }else{
-      if(!r.amountDebit)
-        errors.push(`no amountDebit for currency ${accountDebit.currency}`);
-      if(!isBigInt(r.amountDebit))
-        errors.push("amountDebit must be bigint written as string");
+    if(accountDebit) {
+      if(accountDebit.currency === principalCurrency) {
+        if(r.amountDebit)
+          errors.push("amountDebit should not be defined");
+      }else{
+        if(!r.amountDebit)
+          errors.push(`no amountDebit for currency ${accountDebit.currency}`);
+        if(!isBigInt(r.amountDebit))
+          errors.push("amountDebit must be bigint written as string");
+      }
+    } else {
+      errors.push(`Debit account '${r.debit}' not found`);
     }
 
-    if(accountCredit.currency === principalCurrency) {
-      if(r.amountCredit)
-        errors.push("amountCredit should not be defined");
-    }else{
-      if(!r.amountCredit)
-        errors.push(`no amountCredit for currency ${accountCredit.currency}`);
-      if(!isBigInt(r.amountCredit))
-        errors.push("amountCredit must be bigint written as string");
+    if(accountCredit) {
+      if(accountCredit.currency === principalCurrency) {
+        if(r.amountCredit)
+          errors.push("amountCredit should not be defined");
+      }else{
+        if(!r.amountCredit)
+          errors.push(`no amountCredit for currency ${accountCredit.currency}`);
+        if(!isBigInt(r.amountCredit))
+          errors.push("amountCredit must be bigint written as string");
+      }
+    } else {
+      errors.push(`Credit account '${r.credit}' not found`);
     }
 
     if(errors.length > 0) {

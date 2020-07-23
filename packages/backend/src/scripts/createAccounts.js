@@ -1,8 +1,5 @@
-const firebase = require("firebase-admin");
 const accounts = require("../accounts");
-const config = require('../config');
+const database = require("../database");
 
-const refFirestore = firebase.firestore().collection(config.collection);
-
-refFirestore.doc('accounts').set(accounts);
-console.log(`accounts saved in firebase. Collection ${config.collection}`);
+database.setAccounts(accounts);
+console.log(`accounts saved in firebase. Collection ${database.collection}`);
