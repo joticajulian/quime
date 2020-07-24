@@ -1,5 +1,6 @@
 var firebase = require('firebase-admin');
 const config = require('../config');
+const { safeObject } = require("../utils/utils");
 
 const { collection } = config;
 const refFirestore = firebase.firestore().collection(config.collection);
@@ -11,6 +12,15 @@ async function getRecords() {
     throw new Error(`No data in firebase for collection ${config.collection}`);
 
   return doc.data().records;
+}
+
+async function getState() {
+  const doc = await refFirestore.doc('state').get();
+
+  if(!doc.exists)
+    throw new Error(`No data in firebase for collection ${config.collection}`);
+
+  return doc.data();
 }
 
 async function getAccounts() {
@@ -25,7 +35,11 @@ async function getAccounts() {
 function setRecords(records) {
   if(!Array.isArray(records))
     throw new Error("Save Error: records must be an array");
-  refFirestore.doc('db').set({records});
+  refFirestore.doc('db').set({records: safeObject(records)});
+}
+
+function setState(state) {
+  refFirestore.doc('state').set(safeObject(state));
 }
 
 function setAccounts(data) {
@@ -43,8 +57,10 @@ function setAccounts(data) {
 
 module.exports = {
   getRecords,
+  getState,
   getAccounts,
   setRecords,
+  setState,
   setAccounts,
   collection,
 };

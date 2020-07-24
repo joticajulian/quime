@@ -2,11 +2,13 @@ const firebase = require('firebase-admin');
 
 const config = require("../config");
 const logger = require("../logger");
+const database = require("../database");
 const csvParser = require("./csvParser");
 const { v1: uuidv1 } = require('uuid');
 const {BadRequestError, NotFoundError} = require("../errors");
+const { safeObject } = require("../utils/utils");
 
-const refFirestore = firebase.firestore().collection(config.collection);
+
 
 var db = []
 var state = {}
@@ -23,17 +25,13 @@ function isInitialized() {
 
 async function loadDB() {
   try{
-    var docState = await refFirestore.doc('state').get();
-    var docDB = await refFirestore.doc('db').get();
-    const docAccounts = await refFirestore.doc("accounts").get();
-    if(docState.exists) state = docState.data()
-    if(docDB.exists) db = docDB.data().records
-    if(docAccounts.exists) {
-      accounts = docAccounts.data().accounts;
-      estimations = docAccounts.data().estimations;
-      currencies = docAccounts.data().currencies;
-      principalCurrency = docAccounts.data().principalCurrency;
-    }
+    db = await database.getRecords();
+    state = await database.getState();
+    const data = await database.getAccounts();
+    accounts = data.accounts;
+    currencies = data.currencies;
+    principalCurrency = data.principalCurrency;
+    estimations = data.estimations;
 
     if(!state) state = {}
     if(!db) db = []
@@ -247,30 +245,7 @@ function recalculateBalances(index){
       else a.balance_creditCurrency = -a.balanceCurrency;
     }
   }
-  save(['state'])
-}
-
-function safeObject(obj) {
-  return JSON.parse(JSON.stringify(obj, (key, value) =>
-      typeof value === 'bigint'
-          ? value.toString()
-          : value // return everything else unchanged
-  ));
-}
-
-function save(files){
-  if(!files) files = ['db','state']
-  for(var i in files){
-    if( files[i]==='db'    ){
-      // writeFile(config.DB_FILENAME, JSON.stringify(db))
-      refFirestore.doc('db').set({records: safeObject(db)})
-    }
-
-    if( files[i]==='state' ){
-      // writeFile(config.STATE_FILENAME, JSON.stringify(state))
-      refFirestore.doc('state').set(safeObject(state))
-    }
-  }
+  database.setState(state);
 }
 
 function insert(input) {
@@ -300,7 +275,7 @@ function insert(input) {
     }
   }
   recalculateBalances(0);
-  save(['db']);
+  database.setRecords(db);
   return {
     totalRecords,
     totalRepeated,
@@ -314,14 +289,14 @@ function update(id, record) {
   removeRecord(id)
   insertRecord(record, id)
   recalculateBalances(0)
-  save(['db'])
+  database.setRecords(db);
   return "updated";
 }
 
 function remove(id) {
   removeRecord(id)
   recalculateBalances(0)
-  save(['db'])
+  database.setRecords(db);
   return "removed";
 }
 
