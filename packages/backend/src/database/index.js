@@ -20,7 +20,26 @@ async function getState() {
   if(!doc.exists)
     throw new Error(`No data in firebase for collection ${config.collection}`);
 
-  return doc.data();
+  let state = doc.data();
+  if(!state.balances_by_period) state.balances_by_period = [];
+  state.balances_by_period.forEach(b => {
+    b.accounts.forEach(balanceAccount => {
+      for(let prop in balanceAccount) {
+        switch(prop) {
+          case "account":
+          case "account_type":
+          case "currency":
+          case "precision":
+            break;
+          default:
+            balanceAccount[prop] = BigInt(balanceAccount[prop]);
+            break;
+        }
+      }
+    });
+  });
+
+  return state;
 }
 
 async function getAccounts() {
