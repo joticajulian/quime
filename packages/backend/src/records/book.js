@@ -167,6 +167,47 @@ class Book {
     this.state.balances_by_period.splice(index, len - index);
   }
 
+  addAmountAccountBalance(amount, amountCurrency, aBalance, type) {
+    if(type === "debit") {
+      aBalance.debits += amount;
+      aBalance.balance += amount;
+
+      if (amountCurrency) {
+        aBalance.debitsCurrency += amountCurrency;
+        aBalance.balanceCurrency += amountCurrency;
+      }
+    } else {
+      aBalance.credits += amount;
+      aBalance.balance -= amount;
+
+      if (amountCurrency) {
+        aBalance.creditsCurrency += amountCurrency;
+        aBalance.balanceCurrency -= amountCurrency;
+      }
+    }
+
+    aBalance.acc_balance = aBalance.balance + aBalance.lastBalance;
+
+    if (amountCurrency)
+      aBalance.acc_balanceCurrency = aBalance.balanceCurrency + aBalance.lastBalanceCurrency;
+
+    if (aBalance.balance >= 0) {
+      aBalance.balance_debit = aBalance.balance;
+      aBalance.balance_credit = 0n;
+    } else {
+      aBalance.balance_debit = 0n;
+      aBalance.balance_credit = -aBalance.balance;
+    }
+
+    if (aBalance.balanceCurrency >= 0) {
+      aBalance.balance_debitCurrency = aBalance.balanceCurrency;
+      aBalance.balance_creditCurrency = 0n;
+    } else {
+      aBalance.balance_debitCurrency = 0n;
+      aBalance.balance_creditCurrency = -aBalance.balanceCurrency;
+    }
+  }
+
   recalculateBalances(index = 0){
     index = 0 // TODO: calculate from index
 
@@ -195,63 +236,14 @@ class Book {
       var account_debit  = record.debit
       var account_credit = record.credit
       const amount = BigInt(record.amount);
+      const amountDebit = record.amountDebit ? BigInt(record.amountDebit) : null;
+      const amountCredit = record.amountCredit ? BigInt(record.amountCredit) : null;
 
-      var accountBalanceDebit  = currentPeriod.accounts.find( (b)=>{return b.account === account_debit})
-      var accountBalanceCredit = currentPeriod.accounts.find( (b)=>{return b.account === account_credit})
+      var accountBalanceDebit  = currentPeriod.accounts.find( (b)=>{return b.account === account_debit});
+      var accountBalanceCredit = currentPeriod.accounts.find( (b)=>{return b.account === account_credit});
 
-      accountBalanceDebit.debits += amount;
-      accountBalanceDebit.balance += amount;
-      accountBalanceDebit.acc_balance = accountBalanceDebit.balance + accountBalanceDebit.lastBalance;
-
-      accountBalanceCredit.credits += amount;
-      accountBalanceCredit.balance -= amount;
-      accountBalanceCredit.acc_balance = accountBalanceCredit.balance + accountBalanceCredit.lastBalance;
-
-      if(record.amountDebit) {
-        const amountDebit = BigInt(record.amountDebit);
-        accountBalanceDebit.debitsCurrency += amountDebit;
-        accountBalanceDebit.balanceCurrency += amountDebit;
-        accountBalanceDebit.acc_balanceCurrency = accountBalanceDebit.balanceCurrency + accountBalanceDebit.lastBalanceCurrency;
-      }
-
-      if(record.amountCredit) {
-        const amountCredit = BigInt(record.amountCredit);
-        accountBalanceCredit.creditsCurrency += amountCredit;
-        accountBalanceCredit.balanceCurrency -= amountCredit;
-        accountBalanceCredit.acc_balanceCurrency = accountBalanceCredit.balanceCurrency + accountBalanceCredit.lastBalanceCurrency;
-      }
-
-      if(accountBalanceDebit.balance >=0) {
-        accountBalanceDebit.balance_debit = accountBalanceDebit.balance;
-        accountBalanceDebit.balance_credit = 0n;
-      } else {
-        accountBalanceDebit.balance_debit = 0n;
-        accountBalanceDebit.balance_credit = -accountBalanceDebit.balance;
-      }
-
-      if(accountBalanceDebit.balanceCurrency >=0) {
-        accountBalanceDebit.balance_debitCurrency = accountBalanceDebit.balanceCurrency;
-        accountBalanceDebit.balance_creditCurrency = 0n;
-      } else {
-        accountBalanceDebit.balance_debitCurrency = 0n;
-        accountBalanceDebit.balance_creditCurrency = -accountBalanceDebit.balanceCurrency;
-      }
-
-      if(accountBalanceCredit.balance >=0) {
-        accountBalanceCredit.balance_debit = accountBalanceCredit.balance;
-        accountBalanceCredit.balance_credit = 0n;
-      } else {
-        accountBalanceCredit.balance_debit = 0n;
-        accountBalanceCredit.balance_credit = -accountBalanceCredit.balance;
-      }
-
-      if(accountBalanceCredit.balanceCurrency >=0) {
-        accountBalanceCredit.balance_debitCurrency = accountBalanceCredit.balanceCurrency;
-        accountBalanceCredit.balance_creditCurrency = 0n;
-      } else {
-        accountBalanceCredit.balance_debitCurrency = 0n;
-        accountBalanceCredit.balance_creditCurrency = -accountBalanceCredit.balanceCurrency;
-      }
+      this.addAmountAccountBalance(amount, amountDebit, accountBalanceDebit, "debit");
+      this.addAmountAccountBalance(amount, amountCredit, accountBalanceCredit, "credit");
     }
     this.updateDatabase("state");
   }
