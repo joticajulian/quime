@@ -158,8 +158,6 @@ class Book {
   cleanModifiedState() {
     if(!this.oldestChangeState) this.oldestChangeState = 0;
     const index = this.state.balances_by_period.findIndex(b => b.period.end >= this.oldestChangeState );
-    console.log(`modified from ${new Date(this.oldestChangeState).toISOString()}`)
-    console.log(index)
     this.oldestChangeState = null;
 
     if(index < 0) return;
