@@ -11,7 +11,10 @@ class Book {
     this.principalCurrency = data.principalCurrency;
     this.estimations = data.estimations;
 
-    if(!this.state) this.state = {};
+    if(!this.state) {
+      this.state = {};
+      this.oldestChangeState = 0;
+    }
     if(!this.records) this.records = [];
     if(!this.accounts) this.accounts = [];
     if(!this.currencies) this.currencies = [];
@@ -65,19 +68,17 @@ class Book {
       amountCredit,
     };
 
-    this.notifyState(record);
-
     const len = this.records.length;
     if (len === 0 || record.date >= this.records[len-1].date){
       this.records.push(record);
-      return {appended:true, changedFrom: len-1, id}
     } else {
       const index = this.records.findIndex( (r)=>{return r.date > record.date})
       if(index < 0)
         throw new Error(`Database error: index = -1, records.length:${len}, records date:${new Date(this.records[len-1].date).toISOString()}, record to insert:${JSON.stringify(record)}`)
-      this.records.splice(index, 0, record)
-      return {appended:false, changedFrom:index, id};
+      this.records.splice(index, 0, record);
     }
+    this.notifyState(record);
+    return record;
   }
 
   removeRecord(id){
@@ -91,6 +92,25 @@ class Book {
   notifyState(record) {
     if(!this.oldestChangeState || record.date < this.oldestChangeState)
       this.oldestChangeState = record.date;
+  }
+
+  insert(r, id) {
+    const result = this.insertRecord(r, id);
+    this.recalculateBalances();
+    return result;
+  }
+
+  update(r, id) {
+    this.removeRecord(r);
+    const result = this.insertRecord(r, id);
+    this.recalculateBalances();
+    return result;
+  }
+
+  remove(id) {
+    const result = this.removeRecord(r);
+    this.recalculateBalances();
+    return result;
   }
 
   getPeriod(d) {
@@ -122,7 +142,7 @@ class Book {
         debits: 0n,
         credits: 0n,
         monthBalance: 0n,
-        totalBalance: 0n,
+        totalBalance: BigInt(lastBalance),
       },
       ... usesSecondCurrency && {
         secondCurrency: {
@@ -130,7 +150,7 @@ class Book {
           debits: 0n,
           credits: 0n,
           monthBalance: 0n,
-          totalBalance: 0n,
+          totalBalance: BigInt(lastBalanceCurrency),
         }
       },
     }
@@ -146,8 +166,12 @@ class Book {
       accountBalances = this.accounts.map(a => {
         const lastBalance = lastPeriod.balances.find(b => b.account === a.name);
         const lastTotal = lastBalance.principalCurrency.totalBalance;
-        const lastTotalCurrency = lastBalance.secondCurrency.totalBalance;
-        return this.newAccountBalance(a, lastTotal, lastTotalCurrency);
+        if (lastBalance.secondCurrency) {
+          const lastTotalCurrency = lastBalance.secondCurrency.totalBalance;
+          return this.newAccountBalance(a, lastTotal, lastTotalCurrency);
+        } else {
+          return this.newAccountBalance(a, lastTotal);
+        }
       });
     }
 
@@ -191,9 +215,7 @@ class Book {
     }
   }
 
-  recalculateBalances(index = 0){
-    index = 0 // TODO: calculate from index
-
+  recalculateBalances(){
     if(!this.state.balancesByPeriod) this.state.balancesByPeriod = [];
 
     var locatePeriod = (date) => {
@@ -209,6 +231,11 @@ class Book {
 
       return bPeriod;
     }
+
+    const oldestPeriod = locatePeriod(this.oldestChangeState);
+    const index = this.records.findIndex(r => (r.date >= oldestPeriod.period.start));
+    if(index < 0)
+      throw new Error(`Cannot find record after time ${this.oldestChangeState}`);
 
     this.cleanModifiedState();
 
