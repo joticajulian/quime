@@ -110,109 +110,94 @@ class Book {
   }
 
   newAccountBalance(account, lastBalance, lastBalanceCurrency){
-    if(!account.precision) account.precision = 2
+    const usesSecondCurrency = account.currency !== this.principalCurrency;
+    if(!account.precision) account.precision = 2;
     return {
       account:  account.name,
-      account_type: account.type,
+      type: account.type,
       currency: account.currency,
-      precision:account.precision,
-      debits: 0n, // debits in the principal currency
-      credits: 0n, // credits in the principal currency
-      debitsCurrency: 0n,  // debits in the currency of the account
-      creditsCurrency: 0n, // credits in the currency of the account
-      balance_debit: 0n,
-      balance_credit:0n,
-      balance_debitCurrency: 0n,
-      balance_creditCurrency: 0n,
-      balance: 0n,    // balance of the period
-      balanceCurrency: 0n,
-      acc_balance: 0n, // accumulated balance
-      acc_balanceCurrency: 0n,
-      lastBalance: BigInt(lastBalance),
-      lastBalanceCurrency: BigInt(lastBalanceCurrency),
+      precision: account.precision,
+      principalCurrency: {
+        lastBalance: BigInt(lastBalance),
+        debits: 0n,
+        credits: 0n,
+        monthBalance: 0n,
+        totalBalance: 0n,
+      },
+      ... usesSecondCurrency && {
+        secondCurrency: {
+          lastBalance: BigInt(lastBalanceCurrency),
+          debits: 0n,
+          credits: 0n,
+          monthBalance: 0n,
+          totalBalance: 0n,
+        }
+      },
     }
   }
 
   newBalancePeriod(date) {
-    const balances = this.state.balances_by_period;
+    const { balancesByPeriod } = this.state;
     let accountBalances;
-    if (balances.length === 0) {
+    if (balancesByPeriod.length === 0) {
       accountBalances = this.accounts.map(a => this.newAccountBalance(a, 0n, 0n));
     } else {
-      const lastBalance = balances[balances.length - 1];
+      const lastPeriod = balancesByPeriod[balancesByPeriod.length - 1];
       accountBalances = this.accounts.map(a => {
-        const {
-          acc_balance,
-          acc_balanceCurrency
-        } = lastBalance.accounts.find(b => b.account === a.name);
-        return this.newAccountBalance(a, acc_balance, acc_balanceCurrency);
+        const lastBalance = lastPeriod.balances.find(b => b.account === a.name);
+        const lastTotal = lastBalance.principalCurrency.totalBalance;
+        const lastTotalCurrency = lastBalance.secondCurrency.totalBalance;
+        return this.newAccountBalance(a, lastTotal, lastTotalCurrency);
       });
     }
 
     return {
       period: this.getPeriod(date),
-      accounts: accountBalances,
+      balances: accountBalances,
     };
   }
 
   cleanModifiedState() {
     if(!this.oldestChangeState) this.oldestChangeState = 0;
-    const index = this.state.balances_by_period.findIndex(b => b.period.end >= this.oldestChangeState );
+    const index = this.state.balancesByPeriod.findIndex(b => b.period.end >= this.oldestChangeState );
     this.oldestChangeState = null;
 
     if(index < 0) return;
-    const len = this.state.balances_by_period.length;
-    this.state.balances_by_period.splice(index, len - index);
+    const len = this.state.balancesByPeriod.length;
+    this.state.balancesByPeriod.splice(index, len - index);
   }
 
-  addAmountAccountBalance(amount, amountCurrency, aBalance, type) {
+  addAmountAccountBalance(amount, amountCurrency, balance, type) {
     if(type === "debit") {
-      aBalance.debits += amount;
-      aBalance.balance += amount;
+      balance.principalCurrency.debits += amount;
+      balance.principalCurrency.monthBalance += amount;
+      balance.principalCurrency.totalBalance += amount;
 
-      if (amountCurrency) {
-        aBalance.debitsCurrency += amountCurrency;
-        aBalance.balanceCurrency += amountCurrency;
+      if (balance.secondCurrency) {
+        balance.secondCurrency.debits += amountCurrency;
+        balance.secondCurrency.monthBalance += amountCurrency;
+        balance.secondCurrency.totalBalance += amountCurrency;
       }
     } else {
-      aBalance.credits += amount;
-      aBalance.balance -= amount;
+      balance.principalCurrency.credits += amount;
+      balance.principalCurrency.monthBalance -= amount;
+      balance.principalCurrency.totalBalance -= amount;
 
-      if (amountCurrency) {
-        aBalance.creditsCurrency += amountCurrency;
-        aBalance.balanceCurrency -= amountCurrency;
+      if (balance.secondCurrency) {
+        balance.secondCurrency.credits += amountCurrency;
+        balance.secondCurrency.monthBalance -= amountCurrency;
+        balance.secondCurrency.totalBalance -= amountCurrency;
       }
-    }
-
-    aBalance.acc_balance = aBalance.balance + aBalance.lastBalance;
-
-    if (amountCurrency)
-      aBalance.acc_balanceCurrency = aBalance.balanceCurrency + aBalance.lastBalanceCurrency;
-
-    if (aBalance.balance >= 0) {
-      aBalance.balance_debit = aBalance.balance;
-      aBalance.balance_credit = 0n;
-    } else {
-      aBalance.balance_debit = 0n;
-      aBalance.balance_credit = -aBalance.balance;
-    }
-
-    if (aBalance.balanceCurrency >= 0) {
-      aBalance.balance_debitCurrency = aBalance.balanceCurrency;
-      aBalance.balance_creditCurrency = 0n;
-    } else {
-      aBalance.balance_debitCurrency = 0n;
-      aBalance.balance_creditCurrency = -aBalance.balanceCurrency;
     }
   }
 
   recalculateBalances(index = 0){
     index = 0 // TODO: calculate from index
 
-    if(!this.state.balances_by_period) this.state.balances_by_period = [];
+    if(!this.state.balancesByPeriod) this.state.balancesByPeriod = [];
 
     var locatePeriod = (date) => {
-      const balances = this.state.balances_by_period;
+      const balances = this.state.balancesByPeriod;
       let bPeriod = balances.find((b) => {
         return date >= b.period.start && date <= b.period.end
       });
@@ -231,14 +216,14 @@ class Book {
       const record = this.records[j];
       const currentPeriod = locatePeriod(record.date);
 
-      var account_debit  = record.debit
-      var account_credit = record.credit
+      var debitAccount  = record.debit;
+      var creditAccount = record.credit;
       const amount = BigInt(record.amount);
       const amountDebit = record.amountDebit ? BigInt(record.amountDebit) : null;
       const amountCredit = record.amountCredit ? BigInt(record.amountCredit) : null;
 
-      var accountBalanceDebit  = currentPeriod.accounts.find( (b)=>{return b.account === account_debit});
-      var accountBalanceCredit = currentPeriod.accounts.find( (b)=>{return b.account === account_credit});
+      var accountBalanceDebit  = currentPeriod.balances.find( (b)=>{return b.account === debitAccount});
+      var accountBalanceCredit = currentPeriod.balances.find( (b)=>{return b.account === creditAccount});
 
       this.addAmountAccountBalance(amount, amountDebit, accountBalanceDebit, "debit");
       this.addAmountAccountBalance(amount, amountCredit, accountBalanceCredit, "credit");

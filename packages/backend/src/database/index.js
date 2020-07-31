@@ -21,13 +21,13 @@ async function getState() {
     throw new Error(`No data in firebase for collection ${config.collection}`);
 
   let state = doc.data();
-  if(!state.balances_by_period) state.balances_by_period = [];
-  state.balances_by_period.forEach(b => {
-    b.accounts.forEach(balanceAccount => {
+  if(!state.balancesByPeriod) state.balancesByPeriod = [];
+  state.balancesByPeriod.forEach(b => {
+    b.balances.forEach(balanceAccount => {
       for(let prop in balanceAccount) {
         switch(prop) {
           case "account":
-          case "account_type":
+          case "type":
           case "currency":
           case "precision":
             break;
