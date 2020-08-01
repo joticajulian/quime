@@ -14,7 +14,6 @@ function isInitialized() {
 async function loadDB() {
   try{
     await book.initBook();
-    book.recalculateBalances(0);
   }catch(error){
     logger.info('Firestore init error');
     throw error;
@@ -32,35 +31,23 @@ function insert(input) {
   var appended = true
   let ids = [];
   for(var i in records){
-    var result = book.insertRecord(records[i])
+    var result = book.insertRecord(records[i]);
     ids.push(result.id);
-
-    if(!result.appended) appended = false
-    if(result.changedFrom < changedFrom || changedFrom == -1)
-      changedFrom = result.changedFrom
   }
-  book.recalculateBalances(0);
+  book.recalculateBalances();
   book.updateDatabase("records");
-  database.setRecords(db);
   return {
-    changedFrom,
-    appended,
     ids,
   };
 }
 
 function update(id, record) {
-  book.removeRecord(id);
-  book.insertRecord(record, id);
-  book.recalculateBalances(0);
-  book.updateDatabase("records");
+  book.update(record, id);
   return "updated";
 }
 
 function remove(id) {
-  book.removeRecord(id);
-  book.recalculateBalances(0);
-  book.updateDatabase("records");
+  book.remove(id);
   return "removed";
 }
 

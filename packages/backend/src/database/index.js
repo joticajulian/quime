@@ -32,7 +32,8 @@ async function getState() {
           case "precision":
             break;
           default:
-            balanceAccount[prop] = BigInt(balanceAccount[prop]);
+            for(var subProp in balanceAccount[prop])
+              balanceAccount[prop][subProp] = BigInt(balanceAccount[prop][subProp]);
             break;
         }
       }

@@ -11,14 +11,15 @@ class Book {
     this.principalCurrency = data.principalCurrency;
     this.estimations = data.estimations;
 
-    if(!this.state) {
+    //if(!this.state) {
       this.state = {};
       this.oldestChangeState = 0;
-    }
+    //}
     if(!this.records) this.records = [];
     if(!this.accounts) this.accounts = [];
     if(!this.currencies) this.currencies = [];
     if(!this.estimations) this.estimations = [];
+    this.recalculateBalances();
   }
 
   setRecords(records) {
@@ -96,19 +97,22 @@ class Book {
 
   insert(r, id) {
     const result = this.insertRecord(r, id);
+    this.updateDatabase("records");
     this.recalculateBalances();
     return result;
   }
 
   update(r, id) {
-    this.removeRecord(r);
+    this.removeRecord(r.id);
     const result = this.insertRecord(r, id);
+    this.updateDatabase("records");
     this.recalculateBalances();
     return result;
   }
 
   remove(id) {
-    const result = this.removeRecord(r);
+    const result = this.removeRecord(id);
+    this.updateDatabase("records");
     this.recalculateBalances();
     return result;
   }
@@ -234,10 +238,18 @@ class Book {
 
     const oldestPeriod = locatePeriod(this.oldestChangeState);
     const index = this.records.findIndex(r => (r.date >= oldestPeriod.period.start));
-    if(index < 0)
-      throw new Error(`Cannot find record after time ${this.oldestChangeState}`);
+
+    if(index < 0) {
+      console.log(`Warn: Cannot find record after time ${this.oldestChangeState}`);
+    }
 
     this.cleanModifiedState();
+
+    if(index < 0) {
+      this.updateDatabase("state");
+      console.log(`Warn: Cannot find record after time ${this.oldestChangeState}`);
+      return
+    }
 
     for(var j=index; j<this.records.length; j++){
       const record = this.records[j];
