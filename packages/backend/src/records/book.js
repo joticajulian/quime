@@ -103,7 +103,7 @@ class Book {
   }
 
   update(r, id) {
-    this.removeRecord(r.id);
+    this.removeRecord(id);
     const result = this.insertRecord(r, id);
     this.updateDatabase("records");
     this.recalculateBalances();
