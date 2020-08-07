@@ -5,6 +5,24 @@ const { safeObject } = require("../utils/utils");
 const { collection } = config;
 const refFirestore = firebase.firestore().collection(config.collection);
 
+function onUpdate(callback) {
+  refFirestore.doc("db").onSnapshot(function(doc) {
+    callback("records", doc.data().records);
+  });
+
+  refFirestore.doc("state").onSnapshot(function(doc) {
+    callback("state", parseState(doc.data()));
+  });
+
+  refFirestore.doc("accounts").onSnapshot(function(doc) {
+    const data = doc.data();
+    callback("accounts", data.accounts);
+    callback("currencies", data.currencies);
+    callback("principalCurrency", data.principalCurrency);
+    callback("estimations", data.estimations);
+  });
+}
+
 async function getRecords() {
   const doc = await refFirestore.doc('db').get();
 
@@ -14,33 +32,41 @@ async function getRecords() {
   return doc.data().records;
 }
 
+function parseState(stateString) {
+  let state = {};
+  if(!stateString.balancesByPeriod) stateString.balancesByPeriod = [];
+  state.balancesByPeriod = stateString.balancesByPeriod.map(b => {
+    return {
+      period: b.period,
+      balances: b.balances.map(bAccount => {
+        const balanceAccount = JSON.parse(JSON.stringify(bAccount));
+        for(let prop in balanceAccount) {
+          switch(prop) {
+            case "account":
+            case "type":
+            case "currency":
+            case "precision":
+              break;
+            default:
+              for(var subProp in balanceAccount[prop])
+                balanceAccount[prop][subProp] = BigInt(balanceAccount[prop][subProp]);
+              break;
+          }
+        }
+        return balanceAccount;
+      }),
+    };
+  });
+  return state;
+}
+
 async function getState() {
   const doc = await refFirestore.doc('state').get();
 
   if(!doc.exists)
     throw new Error(`No data in firebase for collection ${config.collection}`);
 
-  let state = doc.data();
-  if(!state.balancesByPeriod) state.balancesByPeriod = [];
-  state.balancesByPeriod.forEach(b => {
-    b.balances.forEach(balanceAccount => {
-      for(let prop in balanceAccount) {
-        switch(prop) {
-          case "account":
-          case "type":
-          case "currency":
-          case "precision":
-            break;
-          default:
-            for(var subProp in balanceAccount[prop])
-              balanceAccount[prop][subProp] = BigInt(balanceAccount[prop][subProp]);
-            break;
-        }
-      }
-    });
-  });
-
-  return state;
+  return parseState(doc.data());
 }
 
 async function getAccounts() {
@@ -82,5 +108,6 @@ module.exports = {
   setRecords,
   setState,
   setAccounts,
+  onUpdate,
   collection,
 };

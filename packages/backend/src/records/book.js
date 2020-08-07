@@ -1,4 +1,5 @@
-const { v1: uuidv1 } = require('uuid');
+const logger = require("../logger");
+const { v1: uuidv1 } = require("uuid");
 const database = require("../database");
 
 class Book {
@@ -20,6 +21,32 @@ class Book {
     if(!this.currencies) this.currencies = [];
     if(!this.estimations) this.estimations = [];
     this.recalculateBalances();
+
+    database.onUpdate((type, value)=>{
+      logger.info(`Update for ${type}`);
+      switch(type) {
+        case "accounts":
+          this.accounts = value;
+          break;
+        case "currencies":
+          this.currencies = value;
+          break;
+        case "principalCurrency":
+          this.principalCurrency = value;
+          break;
+        case "estimations":
+          this.estimations = value;
+          break;
+        case "records":
+          this.records = value;
+          break;
+        case "state":
+          this.state = value;
+          break;
+        default:
+          throw new Error(`type ${type} is not recognized`);
+      }
+    });
   }
 
   setRecords(records) {
@@ -103,7 +130,7 @@ class Book {
   }
 
   update(r, id) {
-    this.removeRecord(r.id);
+    this.removeRecord(id);
     const result = this.insertRecord(r, id);
     this.updateDatabase("records");
     this.recalculateBalances();
