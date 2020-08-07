@@ -238,8 +238,8 @@ export default{
       this.accountsExpense = this.accounts.filter((a)=>{return a.type === 'expense'})
       this.accountsAssetOrLiability = this.accounts.filter((a)=>{return a.type === 'asset' || a.type === 'liability'})
       this.loadPeriods();
-      this.loadReport(this.currentSelection.period)
-      //this.selectAccount( this.currentSelection.type, this.currentSelection.index )
+      this.loadReport(this.currentSelection.period);
+      this.selectAccount( this.currentSelection.type, this.currentSelection.index );
     },
 
     openModalUpdate(item){
@@ -297,6 +297,9 @@ export default{
     },
 
     selectAccount(type, index){
+      if(this.balancesByType[type].balances.length === 0)
+        throw new Error(`Account number ${index} for type ${type} cannot be selected because there are no accounts for this type`);
+
       this.currentSelection.type = type
       this.currentSelection.index = index
       this.currentBalance = this.balancesByType[type].balances[index];
@@ -323,7 +326,7 @@ export default{
 
     selectPeriod(index){
       this.loadReport(index)
-      //this.selectAccount('expenses',0)
+      this.selectAccount( this.currentSelection.type, this.currentSelection.index );
     },
 
     loadReport(index){
