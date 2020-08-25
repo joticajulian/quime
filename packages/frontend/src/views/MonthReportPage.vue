@@ -195,8 +195,8 @@ export default {
     selectMonth(index) {
       this.currentReport = this.monthReports[index];
       this.links = {
-        incomes: this.incomesPage ? "focus" : `/months/${index}/incomes`,
-        assets: this.assetsPage ? "focus" : `/months/${index}/assets`,
+        incomes: `/months/${index}/incomes`,
+        assets: `/months/${index}/assets`,
       }
       this.navFocus = this.incomesPage ? 'incomes' : this.assetsPage ? 'assets' : '';
     },
