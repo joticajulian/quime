@@ -14,128 +14,42 @@
     <!-- Incomes/Expenses page -->
     <div v-if="loaded && incomesPage" class="container margin-menu2">
       <h1>{{currentReport.date}}</h1>
-
-      <!-- Section summary of the month for incomes - expenses -->
-      <div>
-        <div>Ingresos</div>
-        <div class="bar-group">
-          <div class="bar">
-            <div class="green" :style="{width: `${currentReport.incomes.widthBar}%`}"></div>
-          </div>
-          <div class="amount">{{currentReport.incomes.totalShow}}</div>
-        </div>
-        <div class="bar-group">
-          <div class="bar">
-            <div class="red" :style="{width: `${currentReport.expenses.widthBar}%`}"></div>
-          </div>
-          <div class="amount">{{currentReport.expenses.totalShow}}</div>
-        </div>
-        <div>Gastos</div>
-        <div class="bar-group ganancia">
-          <div class="bar">Ganancia</div>
-          <div class="amount">{{currentReport.diffShow}}</div>
-        </div>
-      </div>
+      <SummaryBars type="InEx" :report="currentReport"/>
 
       <!-- section: Incomes -->
       <div class="title text-green">
         <h1 class="description">Ingresos</h1>
         <h1 class="amount">{{currentReport.incomes.totalShow}}</h1>
       </div>
-
-      <div class="card-account"
-        v-for="balance in currentReport.incomes.balances"
-        :key="balance.account"
-      >
-        <div class="icon" :style="{ backgroundImage: 'url(' + balance.logo + ')' }"></div>
-        <div class="description">{{balance.account}}</div>
-        <div class="amount">{{balance.balanceShow}}</div>
-        <div class="amount2"
-          v-if="balance.secondCurrency"
-        >{{balance.balanceCurrencyShow}}</div>
-      </div>
+      <ListAccountBalance :balances="currentReport.incomes.balances" />
 
       <!-- section: Expenses -->
       <div class="title text-red">
         <h1 class="description">Gastos</h1>
         <h1 class="amount">{{currentReport.expenses.totalShow}}</h1>
       </div>
-
-      <div class="card-account"
-        v-for="balance in currentReport.expenses.balances"
-        :key="balance.account"
-      >
-        <div class="icon" :style="{ backgroundImage: 'url(' + balance.logo + ')' }"></div>
-        <div class="description">{{balance.account}}</div>
-        <div class="amount">{{balance.balanceShow}}</div>
-        <div class="amount2"
-          v-if="balance.secondCurrency"
-        >{{balance.balanceCurrencyShow}}</div>
-      </div>
+      <ListAccountBalance :balances="currentReport.expenses.balances" />
     </div>
 
 
     <!-- Assets/Liabilities page -->
     <div v-else-if="loaded && assetsPage" class="container margin-menu2">
       <h1>{{currentReport.date}}</h1>
-
-      <!-- Section summary of assets - liabilities -->
-      <div>
-        <div>Activos</div>
-        <div class="bar-group">
-          <div class="bar">
-            <div class="blue" :style="{width: `${currentReport.assets.widthBar}%`}"></div>
-          </div>
-          <div class="amount">{{currentReport.assets.totalShow}}</div>
-        </div>
-        <div class="bar-group">
-          <div class="bar">
-            <div class="orange" :style="{width: `${currentReport.liabilities.widthBar}%`}"></div>
-          </div>
-          <div class="amount">{{currentReport.liabilities.totalShow}}</div>
-        </div>
-        <div>Pasivos</div>
-        <div class="bar-group ganancia">
-          <div class="bar">Patrimonio</div>
-          <div class="amount">{{currentReport.equityShow}}</div>
-        </div>
-      </div>
+      <SummaryBars type="AsLi" :report="currentReport"/>
 
       <!-- section: Assets -->
       <div class="title text-blue">
         <h1 class="description">Activos</h1>
         <h1 class="amount">{{currentReport.assets.totalShow}}</h1>
       </div>
-
-      <div class="card-account"
-        v-for="balance in currentReport.assets.balances"
-        :key="balance.account"
-      >
-        <div class="icon" :style="{ backgroundImage: 'url(' + balance.logo + ')' }"></div>
-        <div class="description">{{balance.account}}</div>
-        <div class="amount">{{balance.balanceShow}}</div>
-        <div class="amount2"
-          v-if="balance.secondCurrency"
-        >{{balance.balanceCurrencyShow}}</div>
-      </div>
+      <ListAccountBalance :balances="currentReport.assets.balances" />
 
       <!-- section: Liabilities -->
       <div class="title text-orange">
         <h1 class="description">Pasivos</h1>
         <h1 class="amount">{{currentReport.liabilities.totalShow}}</h1>
       </div>
-
-      <div class="card-account"
-        v-for="balance in currentReport.liabilities.balances"
-        :key="balance.account"
-      >
-        <div class="icon" :style="{ backgroundImage: 'url(' + balance.logo + ')' }"></div>
-        <div class="description">{{balance.account}}</div>
-        <div class="amount">{{balance.balanceShow}}</div>
-        <div class="amount2"
-          v-if="balance.secondCurrency"
-        >{{balance.balanceCurrencyShow}}</div>
-      </div>
+      <ListAccountBalance :balances="currentReport.liabilities.balances" />
     </div>
   </div>
 </template>
@@ -144,6 +58,8 @@
 import axios from 'axios'
 import config from '@/config'
 import AppHeader from '@/components/AppHeader'
+import ListAccountBalance from '@/components/ListAccountBalance'
+import SummaryBars from '@/components/SummaryBars'
 import Utils from "@/mixins/Utils"
 
 let callApi;
@@ -194,6 +110,8 @@ export default {
 
   components: {
     AppHeader,
+    ListAccountBalance,
+    SummaryBars,
   },
 
   mixins:[
