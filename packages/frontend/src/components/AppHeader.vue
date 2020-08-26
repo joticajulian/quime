@@ -45,7 +45,7 @@ export default {
     },
     focus: {
       type: String,
-      default: "incomes"
+      default: ""
     }
   },
 
