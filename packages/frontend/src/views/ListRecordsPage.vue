@@ -19,8 +19,19 @@
         <div class="icon" :style="{ backgroundImage: 'url(' + balance.logo + ')' }"></div>
         <h1>{{balance.account}}</h1>
       </div>
-      <div class="title">
-        <h1 class="description">Gasto</h1>
+      <div 
+        v-if="balance.type === 'asset' || balance.type === 'liability'"
+        class="subtitle"
+      >
+        <h2 class="description">Saldo anterior</h2>
+        <h2 class="amount">{{balance.lastBalanceShow}}</h2>
+        <h2 class="description">Debitos</h2>
+        <h2 class="amount">{{balance.debitsShow}}</h2>
+        <h2 class="description">Créditos</h2>
+        <h2 class="amount">{{balance.creditsShow}}</h2>
+      </div>
+      <div class="title" :class="balance.colorClass">
+        <h1 class="description">{{balance.typeShow}}</h1>
         <h1 class="amount">{{balance.balanceShow}}</h1>
         <h2 class="amount2"
           v-if="balance.secondCurrency"

@@ -135,6 +135,10 @@ export default {
         switch(b.type){
           case 'asset':
           case 'liability':
+            b.colorClass = {
+              'text-blue': BigInt(b.principalCurrency.totalBalance) >= 0,
+              'text-orange': BigInt(b.principalCurrency.totalBalance) < 0,
+            };
             b.green = BigInt(b.principalCurrency.totalBalance) >= 0;
             b.balanceShow = this.cents2dollars(b.principalCurrency.totalBalance);
             if(b.secondCurrency)
@@ -143,6 +147,10 @@ export default {
             break
           case 'income':
           case 'expense':
+            b.colorClass = {
+              'text-green': BigInt(b.principalCurrency.monthBalance) < 0,
+              'text-red': BigInt(b.principalCurrency.monthBalance) >= 0,
+            };
             b.green = BigInt(b.principalCurrency.monthBalance) < 0
             b.monthBalance = -BigInt(b.principalCurrency.monthBalance);
             b.balanceShow = this.cents2dollars(b.monthBalance);
@@ -153,6 +161,24 @@ export default {
           default:
             break
         }
+
+        switch(b.type){
+          case 'asset':
+            b.typeShow = "Activos";
+            break
+          case 'liability':
+            b.typeShow = "Pasivos";
+            break
+          case 'income':
+            b.typeShow = "Ingresos";
+            break
+          case 'expense':
+            b.typeShow = "Gastos";
+            break
+          default:
+            break
+        }
+
         b.lastBalanceShow = this.cents2dollars(b.principalCurrency.lastBalance);
         b.debitsShow = this.cents2dollars(b.principalCurrency.debits);
         b.creditsShow = this.cents2dollars(b.principalCurrency.credits);
