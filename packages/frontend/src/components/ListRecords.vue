@@ -1,39 +1,31 @@
 <template>
   <div>
-    <div class="text-right">
-      <select v-model="orderBy">
+    <div class="container-selectOrder">
+      <select v-model="orderBy" class="selectOrder">
         <option value="date">Ordenar por fecha</option>
         <option value="amount">Ordenar por cantidad</option>
       </select>
     </div>
-    <div class="card mb-4">
-      <ul class="list-group list-group-flush">
-        <li v-for="(item, index) in recordsShow" :key="index" class="list-group-item"  @click="onClick(item)">
-          <div>
-            <div class="record-info3">{{item.dateString}}</div>
-            <div class="record-info4">
-              <div class="badge" :class="{
-                'badge-success':item.color === 'green',
-                'badge-primary':item.color === 'blue',
-                'badge-danger': item.color === 'red',
-                'badge-info'  : item.color === 'yellow'
-              }">{{item.badge}}</div>
-            </div>
-          </div>
-          <div class="description">{{item.description}}</div>
-          <div class="record-info1">
-            <div class="icon" v-bind:style="{ backgroundImage: 'url(' + item.image_debit + ')' }"></div>
-            <div class="icon" v-bind:style="{ backgroundImage: 'url(' + item.image_credit + ')' }"></div>
-          </div>
-          <div class="record-info2">
-            <div class="amount">{{item.amountShow}}</div>
-            <div v-if="item.foreignCurrencyDebit" class="foreign-amount">{{item.amountDebitShow}}</div>
-            <div v-if="item.foreignCurrencyCredit" class="foreign-amount">{{item.amountCreditShow}}</div>
-            <div class="accumulated">{{item.balanceShow}}</div>
-          </div>
-        </li>
-      </ul>
-    </div>  
+    <router-link to="/aa" class="a-card-record"
+      v-for="(item, index) in recordsShow"
+      :key="index"
+      @click="onClick(item)"
+    ><div class="card-record shadow">
+        <div class="date">{{item.dateString}}</div>
+        <div class="badge-container">
+          <div class="badge" :class="item.classBadge">{{item.badge}}</div>
+        </div>
+        <div class="icon" v-bind:style="{ backgroundImage: 'url(' + item.image + ')' }"></div>
+        <div class="description">{{item.description}}</div>
+        <div class="amount">{{item.amountShow}}</div>            
+        <div v-if="item.foreignCurrencyDebit" 
+          class="amount2"
+        >{{item.amountDebitShow}}</div>
+        <div v-if="item.foreignCurrencyCredit" 
+          class="amount2"
+        >{{item.amountCreditShow}}</div>
+      </div>
+    </router-link>
   </div>
 </template>
 
@@ -89,13 +81,8 @@ export default {
     elaborateRecords() { 
       const records = JSON.parse(JSON.stringify(this.records));
 
-      let accumulated = BigInt(0);
       records.forEach((r) => {
         r.dateString = new Date(r.date).toISOString().slice(0,-14);
-
-        if(r.debit === this.refAccount) accumulated += BigInt(r.amount);
-        else accumulated -= BigInt(r.amount);
-        r.balance = accumulated;
 
         const accountDebit = this.accounts.find( (a)=>{return a.name === r.debit}  );
         const accountCredit= this.accounts.find( (a)=>{return a.name === r.credit} );
@@ -103,10 +90,9 @@ export default {
         r.foreignCurrencyDebit = !!r.amountDebit;
         r.foreignCurrencyCredit = !!r.amountCredit;
 
-        const showCurrency = r.foreignCurrencyDebit || r.foreignCurrencyCredit;
-        r.amountShow = this.cents2dollars(r.amount, undefined, showCurrency);
-        r.balanceShow = this.cents2dollars(r.balance, undefined, showCurrency);
-
+        // const showCurrency = r.foreignCurrencyDebit || r.foreignCurrencyCredit;
+        r.amountShow = this.cents2dollars(r.amount);
+        
         if(r.foreignCurrencyDebit)
           r.amountDebitShow = this.cents2dollars(r.amountDebit, accountDebit.currency, true);
 
@@ -114,13 +100,16 @@ export default {
           r.amountCreditShow = this.cents2dollars(r.amountCredit, accountCredit.currency, true);
 
         // icons
-        r.image_debit  = accountDebit.logo;
-        r.image_credit = accountCredit.logo;
+        if(accountDebit.name === this.refAccount) {
+          r.image = accountCredit.logo;
+        } else {
+          r.image = accountDebit.logo;
+        }
 
         // type of record
         var typeRec = this.typeRecord(accountDebit.type, accountCredit.type);
-        r.badge = typeRec.text
-        r.color = typeRec.color
+        r.badge = typeRec.badge;
+        r.classBadge = typeRec.classBadge;
       });
 
       this.recordsShow = records;
@@ -145,25 +134,25 @@ export default {
     },
 
     typeRecord(debit, credit){
-      if(debit === 'asset'     && credit === 'asset')     return {text: 'movimiento', color: 'blue' }
-      if(debit === 'asset'     && credit === 'liability') return {text: 'devolucion', color: 'green'}
-      if(debit === 'asset'     && credit === 'income')    return {text: 'ingreso',    color: 'green'}
-      if(debit === 'asset'     && credit === 'expense')   return {text: 'devolucion', color: 'green'}
+      if(debit === 'asset'     && credit === 'asset')     return {badge: 'Movimiento', classBadge: { blue: true} }
+      if(debit === 'asset'     && credit === 'liability') return {badge: 'Préstamo', classBadge: { green: true} }
+      if(debit === 'asset'     && credit === 'income')    return {badge: 'Ingreso',    classBadge: { green: true} }
+      if(debit === 'asset'     && credit === 'expense')   return {badge: 'Devolucion', classBadge: { green: true} }
 
-      if(debit === 'liability' && credit === 'asset')     return {text: 'pago',       color: 'red'  }
-      if(debit === 'liability' && credit === 'liability') return {text: 'transfer deuda', color: 'blue'}
-      if(debit === 'liability' && credit === 'income')    return {text: 'devolucion',    color: 'yellow'}
-      if(debit === 'liability' && credit === 'expense')   return {text: 'devolucion', color: 'green'}
+      if(debit === 'liability' && credit === 'asset')     return {badge: 'Pago',       classBadge: { red: true} }
+      if(debit === 'liability' && credit === 'liability') return {badge: 'Transfer deuda', classBadge: { blue: true} }
+      if(debit === 'liability' && credit === 'income')    return {badge: 'Devolucion',    classBadge: { orange: true} }
+      if(debit === 'liability' && credit === 'expense')   return {badge: 'Devolucion', classBadge: { green: true} }
 
-      if(debit === 'income'    && credit === 'asset')     return {text: 'devolucion ingreso', color: 'red' }
-      if(debit === 'income'    && credit === 'liability') return {text: 'ingreso prestado?', color: 'yellow'}
-      if(debit === 'income'    && credit === 'income')    return {text: 'mov ingreso',    color: 'blue'}
-      if(debit === 'income'    && credit === 'expense')   return {text: 'devolucion a ingresos?', color: 'yellow'}
+      if(debit === 'income'    && credit === 'asset')     return {badge: 'Devolucion ingreso', classBadge: { red: true} }
+      if(debit === 'income'    && credit === 'liability') return {badge: 'Ingreso prestado?', classBadge: { orange: true} }
+      if(debit === 'income'    && credit === 'income')    return {badge: 'Mov ingreso',    classBadge: { blue: true} }
+      if(debit === 'income'    && credit === 'expense')   return {badge: 'Devolucion a ingresos?', classBadge: { orange: true} }
 
-      if(debit === 'expense'   && credit === 'asset')     return {text: 'gasto', color: 'red' }
-      if(debit === 'expense'   && credit === 'liability') return {text: 'gasto', color: 'red' }
-      if(debit === 'expense'   && credit === 'income')    return {text: 'ingreso y gasto', color: 'yellow'} // income that immediatly is spent, without touching my assets (?)
-      if(debit === 'expense'   && credit === 'expense')   return {text: 'mov gasto', color: 'blue'}
+      if(debit === 'expense'   && credit === 'asset')     return {badge: 'Gasto', classBadge: { red: true} }
+      if(debit === 'expense'   && credit === 'liability') return {badge: 'Gasto', classBadge: { red: true} }
+      if(debit === 'expense'   && credit === 'income')    return {badge: 'Ingreso y gasto', classBadge: { orange: true} } // income that immediatly is spent, without touching my assets (?)
+      if(debit === 'expense'   && credit === 'expense')   return {badge: 'Mov gasto', classBadge: { blue: true} }
     },
   }
 }

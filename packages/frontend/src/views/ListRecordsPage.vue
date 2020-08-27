@@ -81,6 +81,9 @@ export default {
   },
 
   watch: {
+    monthSelection: function() {
+      this.updateSelection();
+    },
     accountSelection: function() {
       this.updateSelection();
     },

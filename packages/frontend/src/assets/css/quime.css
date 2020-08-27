@@ -109,11 +109,13 @@ nav ul li a.focus {
 h1 {
   font-size: 30px;
   font-weight: normal;
+  margin: 15px 0px;
 }
 
 h2 {
-  font-size: 24px;
+  font-size: 18px;
   font-weight: normal;
+  margin: 0px;
 }
 
 .bar-group {
@@ -174,6 +176,10 @@ h2 {
   color: var(--orange);
 }
 
+.title {
+  margin: 15px 0px;
+}
+
 .title.account .icon {
   height: 62px;
   width: 62px;
@@ -186,7 +192,7 @@ h2 {
   vertical-align: middle;
 }
 
-div.title.account > h1 {
+.title.account > h1 {
   width: 50%;
   display: inline-block;
   margin: 0px 10px;
@@ -220,7 +226,12 @@ a {
   color: var(--black);
 }
 
-.card-account:hover {
+.card-record, .card-record:visited {
+  padding: 5px 0px;
+  color: var(--black);
+}
+
+.card-account:hover, .card-record:hover {
   background: var(--color-hover-list);
 }
 
@@ -247,6 +258,7 @@ a {
   text-align: end;
   width: calc(40% - 21px);
   vertical-align: middle;
+  font-size: 24px;
 }
 
 .card-account .amount2 {
@@ -256,3 +268,101 @@ a {
   font-size: 14px;
 }
 
+.container-selectOrder {
+  vertical-align: middle;
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 10px;
+}
+
+.selectOrder {
+  height: 32px;
+  width: 170px;
+  background: var(--white);
+  text-indent: 10px;
+  border-style: none;
+  box-shadow: 0px 4px 4px rgba(0, 0, 0, 0.25);
+  align-self: flex-end;
+}
+
+.a-card-record {
+  display: block;
+}
+
+.card-record {
+  padding: 15px 15px;
+  margin: 0px -15px;
+}
+
+.card-record .date {
+  width: 50%;
+  vertical-align: middle;
+  font-size: 13px;
+  display: inline-block;
+}
+
+.card-record .badge-container {
+  width: 50%;
+  vertical-align: middle;
+  display: inline-block;
+}
+
+.badge {
+  float: right;
+  font-size: 13px;
+  padding: 2px 8px;
+  border-radius: 6px;
+  color: var(--white);
+}
+
+.card-record .badge.blue {
+  background: var(--blue);
+}
+
+.card-record .badge.red {
+  background: var(--red);
+}
+
+.card-record .badge.green {
+  background: var(--green);
+}
+
+.card-record .badge.orange {
+  background: var(--orange);
+}
+
+.card-record .description {
+  width: calc(100% - 162px);
+  vertical-align: top;
+  font-size: 14px;
+  word-wrap: break-word;
+  display: inline-block;
+}
+
+.card-record .icon {
+  height: 32px;
+  width: 32px;
+  margin-right: 10px;
+  display: inline-block;
+  overflow: hidden;
+  background-size: cover;
+  background-position: center center;
+  border-radius: 20%;
+  vertical-align: top;
+}
+
+.card-record .amount {
+  width: 120px;
+  vertical-align: text-top;
+  font-size: 24px;
+  text-align: end;
+  display: inline-block;
+  margin-top: 4px;
+}
+
+.card-record .amount2 {
+  display: block;
+  width: 100%;
+  font-size: 14px;
+  text-align: end;
+}
