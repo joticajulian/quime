@@ -1,7 +1,13 @@
 <template>
   <nav>
     <ul class="left">
-      
+      <li v-if="back">
+        <router-link :to="back">
+          <div class="nav-icon">
+            <img src="../assets/back-icon.png" />
+          </div>
+        </router-link>
+      </li>
     </ul>
 
     <ul class="right">
@@ -42,6 +48,10 @@ export default {
     assets: {
       type: String,
       default: "",
+    },
+    back: {
+      type: String,
+      default: ""
     },
     focus: {
       type: String,

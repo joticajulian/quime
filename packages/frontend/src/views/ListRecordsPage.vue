@@ -1,6 +1,6 @@
 <template>
   <div>
-    <AppHeader/>
+    <AppHeader :back="backLink"/>
     
     <select v-model="monthSelection" class="fixed-select1 shadow">
       <option v-for="(report, index) in monthReports" :key="index" :value="index">
@@ -53,6 +53,7 @@ export default {
       accountSelection: 0,
       balance: null,
       currentRecords: null,
+      backLink: "",
     };
   },
 
@@ -68,16 +69,16 @@ export default {
   created() {
     let timer = setInterval(()=>{
       if(this.loaded) {
+        clearInterval(timer);
         const {idMonth, idAccount} = this.$route.params;
         this.monthSelection = idMonth;
         this.accountSelection = idAccount;
         const monthReport = this.monthReports[idMonth];
         this.balance = monthReport.balances[idAccount];
         this.accountBalances = monthReport.balances;
-        clearInterval(timer);
         this.loaded2 = true;
       }
-    }, 3000);
+    }, 100);
   },
 
   watch: {
@@ -91,16 +92,22 @@ export default {
 
   methods: {
     updateSelection(){
-      console.log("update selection "+this.monthSelection+ "  "+this.accountSelection)
       const monthReport = this.monthReports[this.monthSelection];
       const { period } = monthReport;
       this.balance = monthReport.balances[this.accountSelection];
-      console.log(monthReport) 
       this.currentRecords = this.$store.state.records.filter( (r)=>{
         return r.date >= period.start && r.date <= period.end &&
           (r.debit  === this.balance.account ||
            r.credit === this.balance.account)
       }).slice()
+      this.updateBackLink();
+    },
+
+    updateBackLink() {
+      if(this.balance.type === "asset" || this.balance.type === "liability")
+        this.backLink = `/months/${this.monthSelection}?type=assets`;
+      else
+        this.backLink = `/months/${this.monthSelection}?type=incomes`;
     },
   },
 }
