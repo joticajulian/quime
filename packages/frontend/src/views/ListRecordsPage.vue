@@ -42,8 +42,11 @@
         :records="currentRecords"
         :accounts="$store.state.accounts"
         :refAccount="balance.account"
+        @onClick="$refs.modalRecord.show($event);"
       ></ListRecords>
-
+      
+      <!-- Modals -->
+      <ModalRecord ref="modalRecord"/>
     </div>
   </div>
 </template>
@@ -52,6 +55,7 @@
 import AppHeader from '@/components/AppHeader'
 import Database from "@/mixins/Database"
 import ListRecords from '@/components/ListRecords'
+import ModalRecord from '@/components/ModalRecord'
 
 export default {
   name: 'ListRecordsPage',
@@ -65,12 +69,15 @@ export default {
       balance: null,
       currentRecords: null,
       backLink: "",
+      record: {},
+      showModalRecord: false,
     };
   },
 
   components: {
     AppHeader,
     ListRecords,
+    ModalRecord,
   },
 
   mixins: [

@@ -24,13 +24,13 @@
       <div>Activos</div>
       <div class="bar-group">
         <div class="bar">
-          <div class="blue" :style="{width: `${report.assets.widthBar}%`}"></div>
+          <div class="green" :style="{width: `${report.assets.widthBar}%`}"></div>
         </div>
         <div class="amount">{{report.assets.totalShow}}</div>
       </div>
       <div class="bar-group">
         <div class="bar">
-          <div class="orange" :style="{width: `${report.liabilities.widthBar}%`}"></div>
+          <div class="red" :style="{width: `${report.liabilities.widthBar}%`}"></div>
         </div>
         <div class="amount">{{report.liabilities.totalShow}}</div>
       </div>

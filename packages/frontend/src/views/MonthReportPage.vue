@@ -38,14 +38,14 @@
       <SummaryBars type="AsLi" :report="currentReport"/>
 
       <!-- section: Assets -->
-      <div class="title text-blue">
+      <div class="title text-green">
         <h1 class="description">Activos</h1>
         <h1 class="amount">{{currentReport.assets.totalShow}}</h1>
       </div>
       <ListAccountBalance :balances="currentReport.assets.balances" />
 
       <!-- section: Liabilities -->
-      <div class="title text-orange">
+      <div class="title text-red">
         <h1 class="description">Pasivos</h1>
         <h1 class="amount">{{currentReport.liabilities.totalShow}}</h1>
       </div>

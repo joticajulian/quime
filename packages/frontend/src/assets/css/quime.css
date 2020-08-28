@@ -292,13 +292,11 @@ a {
   align-self: flex-end;
 }
 
-.a-card-record {
-  display: block;
-}
-
 .card-record {
   padding: 15px 15px;
   margin: 0px -15px;
+  display: block;
+  cursor: pointer;
 }
 
 .card-record .date {
@@ -373,3 +371,17 @@ a {
   font-size: 14px;
   text-align: end;
 }
+
+.modal {
+  display: block;
+  position: fixed;
+  z-index: 1;
+  padding-top: 150px;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  overflow: auto;
+  background-color: rgba(0,0,0,0.6);
+}
+
