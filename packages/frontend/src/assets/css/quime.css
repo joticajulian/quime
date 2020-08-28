@@ -18,6 +18,10 @@ body {
   font-family: Roboto;
 }
 
+.hide {
+  display: none;
+}
+
 button {
   font-size: 18px;
   text-align: center;
@@ -44,6 +48,21 @@ button.color2 {
 
 button.color2:hover {
   background: var(--color-dark-hover);
+}
+
+button.red {
+  background: var(--red);
+  color: var(--white);
+}
+
+button.green {
+  background: var(--green);
+  color: var(--white);
+}
+
+button.blue {
+  background: var(--blue);
+  color: var(--white);
 }
 
 nav {
@@ -74,16 +93,17 @@ nav ul li {
   padding: 0px 5px;
 }
 
-nav ul li a {
+nav ul li a, nav ul li > div {
   border: 3px solid var(--color1);
   box-sizing: border-box;
+  cursor: pointer;
 }
 
-nav ul li a:hover {
+nav ul li a:hover, nav ul li > div:hover {
   background: var(--color1-hover);
 }
 
-nav ul li a.focus {
+nav ul li a.focus, nav ul li > div.focus {
   border: 3px solid var(--color1-focus);
 }
 
@@ -116,6 +136,10 @@ nav ul li a.focus {
   background: var(--white);
   text-indent: 10px;
   border-style: none;
+}
+
+.margin-menu1 {
+  margin-top: 58px;
 }
 
 .margin-menu2 {

@@ -26,10 +26,8 @@
         </router-link>
       </li>
       <li v-if="update">
-        <div>
-          <div class="nav-icon">
-            <img src="../assets/check-icon.png" />
-          </div>
+        <div class="nav-icon">
+          <img src="../assets/check-icon.png" />
         </div>
       </li>
     </ul>
