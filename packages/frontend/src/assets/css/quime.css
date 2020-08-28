@@ -3,7 +3,7 @@
   --color1-hover: #B6BAE1;
   --color1-focus: #5F6496;
   --color-dark: #535353;
-  --color-dark-hover: #8A8A8A;
+  --color-dark-hover: #696969;
   --color-hover-list: #ECEEFA;
   --black: #000000;
   --white: #FFFFFF;
@@ -16,6 +16,34 @@
 body {
   margin: 0px;
   font-family: Roboto;
+}
+
+button {
+  font-size: 18px;
+  text-align: center;
+  padding: 8px 18px;
+  border-radius: 6px;
+  box-sizing: border-box;
+}
+
+button.color1 {
+  background: var(--color1);
+  color: var(--black);
+  border: 3px solid var(--color1);
+}
+
+button.color1:hover {
+  background: var(--color1-hover);
+}
+
+button.color2 {
+  background: var(--color-dark);
+  color: var(--white);
+  border: 3px solid var(--color-dark);
+}
+
+button.color2:hover {
+  background: var(--color-dark-hover);
 }
 
 nav {

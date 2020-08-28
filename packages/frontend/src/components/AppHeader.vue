@@ -25,6 +25,13 @@
           </div>
         </router-link>
       </li>
+      <li v-if="update">
+        <div>
+          <div class="nav-icon">
+            <img src="../assets/check-icon.png" />
+          </div>
+        </div>
+      </li>
     </ul>
     <!--<b-navbar-nav class="nav-link ml-auto d-lg-none">
       <button class="btn btn-primary" @click="logout">Logout</button>
@@ -51,7 +58,11 @@ export default {
     },
     back: {
       type: String,
-      default: ""
+      default: "",
+    },
+    update: {
+      type: String,
+      default: "",
     },
     focus: {
       type: String,
@@ -73,13 +84,3 @@ export default {
   },
 };
 </script>
-
-<style scoped>
-#logo {
-  height: 2.3rem;
-}
-#logo img {
-  max-width: 100%;
-  max-height: 100%;
-}
-</style>

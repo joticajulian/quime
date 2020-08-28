@@ -1,11 +1,11 @@
 <template>
   <div class="modal" v-if="showModal" @click="hide()">
-    <div class="modal-content-record">
+    <div class="modal-content-record" @click.stop="">
       <!-- header -->
       <div class="header">
         <ul>
           <li>
-            <router-link :to="`${$route.path}?edit=${record.id}`">
+            <router-link :to="`/editRecord?id=${record.id}`">
               <div class="header-icon">
                 <img src="../assets/edit-icon.png" />
               </div>

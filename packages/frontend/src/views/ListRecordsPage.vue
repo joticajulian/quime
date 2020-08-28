@@ -46,7 +46,10 @@
       ></ListRecords>
       
       <!-- Modals -->
-      <ModalRecord ref="modalRecord"/>
+      <ModalRecord ref="modalRecord" 
+        @onDelete="$refs.modalDelete.show($event);"/>
+      <ModalDelete ref="modalDelete"
+        @onConfirmDelete="deleteRecord($event)" />
     </div>
   </div>
 </template>
@@ -56,6 +59,7 @@ import AppHeader from '@/components/AppHeader'
 import Database from "@/mixins/Database"
 import ListRecords from '@/components/ListRecords'
 import ModalRecord from '@/components/ModalRecord'
+import ModalDelete from '@/components/ModalDelete'
 
 export default {
   name: 'ListRecordsPage',
@@ -78,6 +82,7 @@ export default {
     AppHeader,
     ListRecords,
     ModalRecord,
+    ModalDelete,
   },
 
   mixins: [

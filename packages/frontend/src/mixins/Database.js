@@ -64,6 +64,11 @@ export default {
       this.loaded = true;
     },
 
+    deleteRecord(record) {
+      console.log("delete")
+      console.log(record)
+    },
+
     loadMonths(){
       let maxInEx = BigInt(0);
       let maxAsLi = BigInt(0);

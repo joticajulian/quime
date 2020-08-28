@@ -4,6 +4,7 @@ import Home from './views/Home.vue'
 import ReportsPage from './views/ReportsPage.vue'
 import MonthReportPage from './views/MonthReportPage.vue'
 import ListRecordsPage from './views/ListRecordsPage.vue'
+import UpdateRecordPage from './views/UpdateRecordPage.vue'
 
 Vue.use(Router)
 
@@ -32,6 +33,19 @@ export default new Router({
       path: '/months/:idMonth/:idAccount',
       name: 'month-account report',
       component: ListRecordsPage,
+    },
+    {
+      path: '/newRecord',
+      name: 'month-account report',
+      component: UpdateRecordPage,
+    },
+    {
+      path: '/editRecord',
+      name: 'month-account report',
+      component: UpdateRecordPage,
+      props: route => ({
+        id: route.query.id,
+      })
     }
   ]
 })
