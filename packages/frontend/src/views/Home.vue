@@ -46,7 +46,7 @@ export default {
         const response = await axios.post(config.serverLogin, data);
         localStorage.setItem("JWT", response.data.token);
         console.log('logged in')
-        router.push('/dashboard')
+        router.push('/months/0?type=incomes')
       }catch(error){
         this.alert.danger = true
         this.alert.dangerText = error.message

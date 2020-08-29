@@ -51,6 +51,8 @@
       </div>
       <ListAccountBalance :balances="currentReport.liabilities.balances" />
     </div>
+
+    <ButtonAdd />
   </div>
 </template>
 
@@ -60,6 +62,7 @@ import config from '@/config'
 import AppHeader from '@/components/AppHeader'
 import ListAccountBalance from '@/components/ListAccountBalance'
 import SummaryBars from '@/components/SummaryBars'
+import ButtonAdd from "@/components/ButtonAdd"
 import Database from "@/mixins/Database"
 
 let callApi;
@@ -93,6 +96,7 @@ export default {
     AppHeader,
     ListAccountBalance,
     SummaryBars,
+    ButtonAdd,
   },
 
   mixins:[

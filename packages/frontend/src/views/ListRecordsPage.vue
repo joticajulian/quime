@@ -44,6 +44,8 @@
         :refAccount="balance.account"
         @onClick="$refs.modalRecord.show($event);"
       ></ListRecords>
+
+      <ButtonAdd />
       
       <!-- Modals -->
       <ModalRecord ref="modalRecord" 
@@ -60,6 +62,7 @@ import Database from "@/mixins/Database"
 import ListRecords from '@/components/ListRecords'
 import ModalRecord from '@/components/ModalRecord'
 import ModalDelete from '@/components/ModalDelete'
+import ButtonAdd from "@/components/ButtonAdd"
 
 export default {
   name: 'ListRecordsPage',
@@ -83,6 +86,7 @@ export default {
     ListRecords,
     ModalRecord,
     ModalDelete,
+    ButtonAdd,
   },
 
   mixins: [

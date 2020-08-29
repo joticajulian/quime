@@ -32,16 +32,19 @@ export default {
     accounts: {
       type: Array,
       default: ()=>([]),
+    },
+    account: {
+      type: Object,
+      default: ()=>({
+        name: "Select account",
+        logo: "",
+      }),
     }
   },
 
   data() {
     return {
       showModal: false,
-      account: {
-        name: "Select account",
-        logo: "",
-      }
     }
   },
 
@@ -51,7 +54,6 @@ export default {
     },
 
     selectAccount(acc) {
-      this.account = acc;
       this.$emit('onChange', acc);
       this.hide();
     },

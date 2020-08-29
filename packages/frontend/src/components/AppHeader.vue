@@ -8,7 +8,7 @@
           </div>
         </router-link>
       </li>
-      <li v-if="title">{{title}}</li>
+      <li v-if="title" class="title">{{title}}</li>
     </ul>
 
     <ul class="right">

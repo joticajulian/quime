@@ -1,4 +1,5 @@
 import axios from 'axios'
+import router from '@/router'
 import config from '@/config'
 import Utils from "@/mixins/Utils"
 
@@ -44,8 +45,8 @@ export default {
   },
 
   methods: {
-    async loadDatabase(){
-      if(!this.$store.state.records) {
+    async loadDatabase(force){
+      if(!this.$store.state.records || force) {
         const response = await callApi.get("/");
         this.$store.state.records = response.data.db;
         this.$store.state.state = response.data.state;
@@ -64,9 +65,31 @@ export default {
       this.loaded = true;
     },
 
-    deleteRecord(record) {
-      console.log("delete")
-      console.log(record)
+    async saveRecord(record) {
+      try {
+        let response;
+        if(record.id) {
+          response = await callApi.put(`/${record.id}`, record);
+        } else {
+          response = await callApi.put("/", record);
+        }
+        console.log(response.data);
+      } catch(error) {
+        throw error;
+      }
+      this.loadDatabase(true);
+      router.push('/months/0?type=incomes')
+    },
+
+    async deleteRecord(record) {
+      try {
+        const response = await callApi.delete(`/${record.id}`);
+        console.log(response.data);
+      } catch(error) {
+        throw error;
+      }
+      this.loadDatabase(true);
+      router.push('/months/0?type=incomes')
     },
 
     loadMonths(){

@@ -3,12 +3,12 @@
     <AppHeader 
       :title="title"
       update="icon"
-      @onUpdate="getRecord()"
+      @onUpdate="updateRecord()"
     />
     <form class="margin-menu1 container" @click="$event.preventDefault()">
       <label for="date" aria-label="date">Fecha</label>
       <input v-model="date" id="date" type="date"/>
-      <button :class="classType" id="type" @click="changeType()">{{labelType}}</button>
+      <button :class="classType" id="type" @click="toggleType()">{{labelType}}</button>
       <label for="amount"
         arial-label="amount-principal-currency">Cantidad</label>
       <input v-model="amount" id="amount" class="amount" type="text"/>
@@ -31,6 +31,7 @@
             id="account1"
             :title="labelAccount1"
             :accounts="accounts1"
+            :account="account1"
             @onChange="account1 = $event;"
           />
         </div>
@@ -40,6 +41,7 @@
             id="account2"
             :title="labelAccount2"
             :accounts="accounts2"
+            :account="account2"
             @onChange="account2 = $event;"
           />
         </div>
@@ -108,10 +110,14 @@ export default {
     let timer = setInterval(()=>{
       if(this.loaded) {
         clearInterval(timer);
-        this.type = "other";
-        this.changeType();
-        this.accounts1 = this.$store.state.accounts;
-        this.accounts2 = this.$store.state.accounts;
+        if(this.id) {
+          this.title = "Modificar";
+          this.loadRecord(this.id);
+        } else {
+          this.title = "Insertar";
+          this.type = "other";
+          this.toggleType();
+        }
         this.dbLoaded = true;
       }
     }, 100);
@@ -119,17 +125,30 @@ export default {
 
   watch: {
     account1: function () {
-      this.foreignCurrency1 = this.account1.currency !== this.$store.state.principalCurrency;
-      this.currency1 = this.account1.name;
+      this.updateCurrency1();
+      
     },
     account2: function () {
-      this.foreignCurrency2 = this.account2.currency !== this.$store.state.principalCurrency;
-      this.currency2 = this.account2.name;
+      this.updateCurrency2();
     },
   },
 
   methods: {
-    changeType() {
+    updateCurrency1() {
+      this.currency1 = this.account1.currency;
+      this.foreignCurrency1 = this.currency1 !== this.$store.state.principalCurrency;
+      console.log(this.currency1)
+      console.log(this.foreignCurrency1)
+    },
+
+    updateCurrency2() {
+      this.currency2 = this.account2.currency;
+      this.foreignCurrency2 = this.currency2 !== this.$store.state.principalCurrency;
+      console.log(this.currency2)
+      console.log(this.foreignCurrency2)
+    },
+    
+    toggleType() {
       switch(this.type) {
         case "expense":
           this.type = "income";
@@ -183,6 +202,8 @@ export default {
      *  precision 6: "12.345" --> "12345000"
      */
     parseAmount(amount, currency) {
+      console.log(currency)
+      console.log(this.$store.state.currencies)
       const {precision} = this.$store.state.currencies.find((c) => (c.name === currency));
       if(!precision)
         throw new Error("Error retrieving precision in currencies");
@@ -201,6 +222,33 @@ export default {
       decimals = decimals.substring(0, precision);
       decimals += "0".repeat(precision - decimals.length);
       return integer + decimals;
+    },
+
+    loadRecord(id) {
+      const record = this.$store.state.records.find(r => (r.id === id));
+      this.type = "movement";
+      this.toggleType();
+
+      this.id = record.id;
+      this.date = new Date(record.date).toISOString().slice(0,-14);
+      this.description = record.description;
+      this.amount = this.cents2dollars(record.amount);
+
+      this.account1 = this.$store.state.accounts.find(a => (a.name === record.debit));
+      this.account2 = this.$store.state.accounts.find(a => (a.name === record.credit));
+
+      this.updateCurrency1();
+      this.updateCurrency2();
+
+      if(this.foreignCurrency1)
+        this.amount1 = this.cents2dollars(record.amountDebit, this.currency1);
+      if(this.foreignCurrency2)
+        this.amount2 = this.cents2dollars(record.amountCredit, this.currency2);
+    },
+
+    updateRecord() {
+      const record = this.getRecord();
+      this.saveRecord(record);
     },
 
     getRecord() {
@@ -234,6 +282,7 @@ export default {
         }
     
         const record = {
+          id: this.id,
           date: new Date(this.date+'T00:00:00Z').getTime(),
           description: this.description,
           debit,
@@ -242,10 +291,9 @@ export default {
           amountDebit,
           amountCredit,
         };
-
-        console.log(record)
         if(isNaN(record.date))
           throw new Error(`Invalid date ${this.date}. Use the format YYYY-mm-dd`);
+        return record;
       }catch(error){
         console.log("show danger")
         //this.$refs.alerts.showDanger(error.message)
