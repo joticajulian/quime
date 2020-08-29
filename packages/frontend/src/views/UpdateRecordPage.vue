@@ -20,20 +20,24 @@
           class="hide-label">Amount debit</label>
         <input v-model="amountDebit" id="amountDebit" type="number"/>
       </div>
-      <div id="accounts">
+      <div id="accounts" v-if="dbLoaded">
         <div class="account-section mr">
           <label for="account1">{{labelAccount1}}</label>
-          <div id="account1" class="account">
-            <div class="icon" :style="{ backgroundImage: 'url(' + account1.logo + ')' }"></div>
-            <div class="name">{{account1.name}}</div>
-          </div>
+          <SelectAccount
+            id="account1"
+            :title="labelAccount1"
+            :accounts="accounts1"
+            @onChange="account1 = $event;"
+          />
         </div>
         <div class="account-section">
-          <label for="account2">{{labelAccount2}}</label>
-          <div id="account2" class="account">
-            <div class="icon" :style="{ backgroundImage: 'url(' + account2.logo + ')' }"></div>
-            <div class="name">{{account2.name}}</div>
-          </div>
+          <label for="account1">{{labelAccount2}}</label>
+          <SelectAccount
+            id="account2"
+            :title="labelAccount2"
+            :accounts="accounts2"
+            @onChange="account2 = $event;"
+          />
         </div>
       </div>
       <label for="description" aria-label="description">Descripcion</label>
@@ -44,6 +48,7 @@
 
 <script>
 import AppHeader from '@/components/AppHeader';
+import SelectAccount from '@/components/SelectAccount';
 import Database from '@/mixins/Database';
 
 export default {
@@ -56,6 +61,7 @@ export default {
 
   data() {
     return {
+      dbLoaded: false,
       date: null,
       amount: "",
       amountDebit: "",
@@ -64,26 +70,40 @@ export default {
       type: "Gasto",
       account1: {
         logo: "",
-        name: "desde",
+        name: "",
       },
       account2: {
         logo: "",
-        name: "hacia",
+        name: "",
       },
       labelAccount1: "Cuenta",
       labelAccount2: "Categoría",
       foreignCurrencyCredit: true,
       foreignCurrencyDebit: true,
+      accounts1: [],
+      accounts2: [],
     };
   },
 
   components: {
     AppHeader,
+    SelectAccount,
   },
 
   mixins: [
     Database
-  ]
+  ],
+
+  created() {
+    let timer = setInterval(()=>{
+      if(this.loaded) {
+        clearInterval(timer);
+        this.accounts1 = this.$store.state.accounts;
+        this.accounts2 = this.$store.state.accounts;
+        this.dbLoaded = true;
+      }
+    }, 100);
+  },
 }
 </script>
 
