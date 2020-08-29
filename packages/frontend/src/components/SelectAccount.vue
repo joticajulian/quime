@@ -54,7 +54,6 @@ export default {
       this.account = acc;
       this.$emit('onChange', acc);
       this.hide();
-      console.log("select")
     },
   } 
 }

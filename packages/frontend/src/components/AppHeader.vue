@@ -8,6 +8,7 @@
           </div>
         </router-link>
       </li>
+      <li v-if="title">{{title}}</li>
     </ul>
 
     <ul class="right">
@@ -26,7 +27,7 @@
         </router-link>
       </li>
       <li v-if="update">
-        <div class="nav-icon">
+        <div class="nav-icon" @click="$emit('onUpdate')">
           <img src="../assets/check-icon.png" />
         </div>
       </li>
@@ -46,6 +47,10 @@ export default {
   name: "AppHeader",
 
   props: {
+    title: {
+      type: String,
+      default: "",
+    },
     incomes: {
       type: String,
       default: "",
