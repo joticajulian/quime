@@ -1,6 +1,5 @@
 const jose = require("jose");
 const firebase = require('firebase-admin');
-const firebaseCredential = require("./firebase-adminsdk.json");
 require('dotenv').config();
 
 const config = {
@@ -12,7 +11,7 @@ const config = {
   },
   privKeyJWK: jose.JWK.generateSync("EC", "secp256k1"),
   databaseURL: process.env.DATABASE_URL,
-  credential: firebaseCredential,
+  credential: JSON.parse(Buffer.from(process.env.CREDENTIAL, 'base64').toString()),
   collection: process.env.COLLECTION || "test-collection",
   port: process.env.PORT || 8080,
 };
