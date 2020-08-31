@@ -14,7 +14,7 @@
       </option>
     </select>
 
-    <div v-if="loaded2" class="container margin-menu3">
+    <div v-if="loaded" class="container margin-menu3">
       <div class="title account">
         <div class="icon" :style="{ backgroundImage: 'url(' + balance.logo + ')' }"></div>
         <h1>{{balance.account}}</h1>
@@ -45,7 +45,7 @@
         @onClick="$refs.modalRecord.show($event);"
       ></ListRecords>
 
-      <ButtonAdd />
+      <ButtonAdd :fillForm="newRecordForm"/>
       
       <!-- Modals -->
       <ModalRecord ref="modalRecord" 
@@ -69,7 +69,7 @@ export default {
 
   data() {
     return {
-      loaded2: false,
+      loaded: false,
       accountBalances: null,
       monthSelection: 0,
       accountSelection: 0,
@@ -77,7 +77,7 @@ export default {
       currentRecords: null,
       backLink: "",
       record: {},
-      showModalRecord: false,
+      newRecordForm: {},
     };
   },
 
@@ -95,7 +95,7 @@ export default {
 
   created() {
     let timer = setInterval(()=>{
-      if(this.loaded) {
+      if(this.dbLoaded) {
         clearInterval(timer);
         const {idMonth, idAccount} = this.$route.params;
         this.monthSelection = idMonth;
@@ -103,7 +103,7 @@ export default {
         const monthReport = this.monthReports[idMonth];
         this.balance = monthReport.balances[idAccount];
         this.accountBalances = monthReport.balances;
-        this.loaded2 = true;
+        this.loaded = true;
       }
     }, 100);
   },
@@ -128,6 +128,12 @@ export default {
            r.credit === this.balance.account)
       }).slice()
       this.updateBackLink();
+
+      this.newRecordForm = {
+        date: `${monthReport.year}-${monthReport.month<9?"0":""}${monthReport.month+1}-01`,
+        account: this.balance.account,
+      };
+      console.log(this.newRecordForm)
     },
 
     updateBackLink() {

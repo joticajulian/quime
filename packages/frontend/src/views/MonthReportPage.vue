@@ -52,7 +52,7 @@
       <ListAccountBalance :balances="currentReport.liabilities.balances" />
     </div>
 
-    <ButtonAdd />
+    <ButtonAdd :fillForm="newRecordForm"/>
   </div>
 </template>
 
@@ -83,12 +83,14 @@ export default {
 
   data() {
     return {
+      loaded: false,
       links: {
         incomes: "/months",
         assets: "/months"
       },
       navFocus: "incomes",
       monthSelection: 0,
+      newRecordForm: {},
     };
   },
 
@@ -117,10 +119,11 @@ export default {
 
   created() {
     let timer = setInterval(()=>{
-      if(this.loaded) {
+      if(this.dbLoaded) {
+        clearInterval(timer);
         this.monthSelection = this.$route.params.idMonth;
         this.selectMonth(this.monthSelection);
-        clearInterval(timer);
+        this.loaded = true;
       }
     }, 300);
   },
@@ -133,6 +136,9 @@ export default {
         assets: `/months/${index}?type=assets`,
       }
       this.navFocus = this.incomesPage ? 'incomes' : this.assetsPage ? 'assets' : '';
+      this.newRecordForm = {
+        date: `${this.currentReport.year}-${this.currentReport.month<9?"0":""}${this.currentReport.month+1}-01`,
+      };
     },
   },
 };

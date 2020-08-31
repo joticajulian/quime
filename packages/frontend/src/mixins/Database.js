@@ -10,7 +10,7 @@ export default {
 
   data() {
     return {
-      loaded: false,
+      dbLoaded: false,
       months:[
         'Enero',
         'Febrero',
@@ -41,6 +41,7 @@ export default {
       timeout: 30000,
       headers: {"Authorization" : `Bearer ${token}`},
     });
+    console.log("database.js created")
     this.loadDatabase();
   },
 
@@ -62,7 +63,7 @@ export default {
       this.accountsExpense = this.$store.state.accounts.filter((a)=>{return a.type === 'expense'})
       this.accountsAssetOrLiability = this.$store.state.accounts.filter((a)=>{return a.type === 'asset' || a.type === 'liability'})
       this.loadMonths();
-      this.loaded = true;
+      this.dbLoaded = true;
     },
 
     async saveRecord(record) {
@@ -77,6 +78,7 @@ export default {
       } catch(error) {
         throw error;
       }
+      this.dbLoaded = false;
       this.loadDatabase(true);
       router.push('/months/0?type=incomes')
     },
@@ -88,6 +90,7 @@ export default {
       } catch(error) {
         throw error;
       }
+      this.dbLoaded = false;
       this.loadDatabase(true);
       router.push('/months/0?type=incomes')
     },

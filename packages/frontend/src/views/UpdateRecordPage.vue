@@ -24,7 +24,7 @@
           class="hide-label">Amount 2</label>
         <input v-model="amount2" id="amount2" class="amount" type="text"/>
       </div>
-      <div id="accounts" v-if="dbLoaded">
+      <div id="accounts" v-if="loaded">
         <div class="account-section mr">
           <label for="account1">{{labelAccount1}}</label>
           <SelectAccount
@@ -62,12 +62,12 @@ export default {
     id: {
       type: String,
       default: "",
-    }
+    },
   },
 
   data() {
     return {
-      dbLoaded: false,
+      loaded: false,
       title: "Insertar",
       type: "expense",
       labelType: "Gasto",
@@ -87,8 +87,8 @@ export default {
       },
       labelAccount1: "Cuenta",
       labelAccount2: "Categoría",
-      foreignCurrency1: true,
-      foreignCurrency2: true,
+      foreignCurrency1: false,
+      foreignCurrency2: false,
       currency1: "",
       currency2: "",
       accounts1: [],
@@ -106,19 +106,19 @@ export default {
     Database
   ],
 
-  created() {
+  mounted() { console.log("created")
     let timer = setInterval(()=>{
-      if(this.loaded) {
+      if(this.dbLoaded) {
         clearInterval(timer);
         if(this.id) {
           this.title = "Modificar";
           this.loadRecord(this.id);
         } else {
           this.title = "Insertar";
-          this.type = "other";
-          this.toggleType();
+          this.renderType("other");
+          this.fillDefault();
         }
-        this.dbLoaded = true;
+        this.loaded = true;
       }
     }, 100);
   },
@@ -152,6 +152,24 @@ export default {
       switch(this.type) {
         case "expense":
           this.type = "income";
+          break;
+        case "other":
+          this.type = "expense";
+          break;
+        case "income":
+          this.type = "movement";
+          break;
+        case "movement":
+          this.type = "other";
+          break;
+      }
+      this.renderType();
+    },
+    
+    renderType(type) {
+      if(type) this.type = type;
+      switch(this.type) {
+        case "income":
           this.classType = {green: true};
           this.labelType = "Ingreso";
           this.labelAccount1 = "Cuenta";
@@ -159,8 +177,7 @@ export default {
           this.accounts1 = this.$store.state.accounts.filter((a)=>(a.type === 'asset' || a.type === 'liability'));
           this.accounts2 = this.$store.state.accounts.filter((a)=>(a.type === 'income'));
           break;
-        case "other":
-          this.type = "expense";
+        case "expense":
           this.classType = {red: true};
           this.labelType = "Gasto";
           this.labelAccount1 = "Cuenta";
@@ -168,8 +185,7 @@ export default {
           this.accounts1 = this.$store.state.accounts.filter((a)=>(a.type === 'asset' || a.type === 'liability'));
           this.accounts2 = this.$store.state.accounts.filter((a)=>(a.type === 'expense'));
           break;
-        case "income":
-          this.type = "movement";
+        case "movement":
           this.classType = {blue: true};
           this.labelType = "Movimiento";
           this.labelAccount1 = "Desde";
@@ -177,8 +193,7 @@ export default {
           this.accounts1 = this.$store.state.accounts.filter((a)=>(a.type === 'asset' || a.type === 'liability'));
           this.accounts2 = this.$store.state.accounts.filter((a)=>(a.type === 'asset' || a.type === 'liability'));
           break;
-        case "movement":
-          this.type = "other";
+        case "other":
           this.classType = {blue: true};
           this.labelType = "Otro";
           this.labelAccount1 = "Débito";
@@ -226,8 +241,7 @@ export default {
 
     loadRecord(id) {
       const record = this.$store.state.records.find(r => (r.id === id));
-      this.type = "movement";
-      this.toggleType();
+      this.renderType("other");
 
       this.id = record.id;
       this.date = new Date(record.date).toISOString().slice(0,-14);
@@ -244,6 +258,31 @@ export default {
         this.amount1 = this.cents2dollars(record.amountDebit, this.currency1);
       if(this.foreignCurrency2)
         this.amount2 = this.cents2dollars(record.amountCredit, this.currency2);
+    },
+
+    fillDefault() {console.log("default"); console.log(this.$route.query)
+      if( this.$route.query.date )
+        this.date = this.$route.query.date;
+      if( this.$route.query.account ) {
+        const account = this.$store.state.accounts.find(a => a.name === this.$route.query.account);
+        console.log(account);
+
+        switch(account.type) {
+          case 'expense':
+            this.renderType("expense");
+            this.account2 = account;
+            break;
+          case 'income':
+            this.renderType("income");
+            this.account2 = account;
+            break;
+          case 'asset':
+          case 'liability':
+            this.renderType("expense");
+            this.account1 = account;    
+        }
+      }
+        
     },
 
     updateRecord() {
