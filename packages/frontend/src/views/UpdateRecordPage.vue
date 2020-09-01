@@ -7,7 +7,7 @@
     />
     <form class="margin-menu1 container" @click="$event.preventDefault()">
       <label for="date" aria-label="date">Fecha</label>
-      <input v-model="date" id="date" type="date"/>
+      <input v-model="date" id="date" type="text"/>
       <button :class="classType" id="type" @click="toggleType()">{{labelType}}</button>
       <label for="amount"
         arial-label="amount-principal-currency">Cantidad</label>
@@ -106,7 +106,7 @@ export default {
     Database
   ],
 
-  mounted() { console.log("created")
+  mounted() {
     let timer = setInterval(()=>{
       if(this.dbLoaded) {
         clearInterval(timer);
@@ -137,15 +137,11 @@ export default {
     updateCurrency1() {
       this.currency1 = this.account1.currency;
       this.foreignCurrency1 = this.currency1 !== this.$store.state.principalCurrency;
-      console.log(this.currency1)
-      console.log(this.foreignCurrency1)
     },
 
     updateCurrency2() {
       this.currency2 = this.account2.currency;
       this.foreignCurrency2 = this.currency2 !== this.$store.state.principalCurrency;
-      console.log(this.currency2)
-      console.log(this.foreignCurrency2)
     },
     
     toggleType() {
@@ -217,8 +213,6 @@ export default {
      *  precision 6: "12.345" --> "12345000"
      */
     parseAmount(amount, currency) {
-      console.log(currency)
-      console.log(this.$store.state.currencies)
       const {precision} = this.$store.state.currencies.find((c) => (c.name === currency));
       if(!precision)
         throw new Error("Error retrieving precision in currencies");
@@ -260,12 +254,11 @@ export default {
         this.amount2 = this.cents2dollars(record.amountCredit, this.currency2);
     },
 
-    fillDefault() {console.log("default"); console.log(this.$route.query)
+    fillDefault() {
       if( this.$route.query.date )
         this.date = this.$route.query.date;
       if( this.$route.query.account ) {
         const account = this.$store.state.accounts.find(a => a.name === this.$route.query.account);
-        console.log(account);
 
         switch(account.type) {
           case 'expense':
