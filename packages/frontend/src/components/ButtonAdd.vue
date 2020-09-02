@@ -55,7 +55,7 @@ a:hover {
 a img {
   height: 32px;
   width: 32px;
-  padding: 6px;
+  padding: calc(50% - 16px);
 }
 
 .empty {

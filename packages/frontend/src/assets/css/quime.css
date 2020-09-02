@@ -130,6 +130,7 @@ nav ul li a.focus, nav ul li > div.focus {
   background: var(--white);
   text-indent: 10px;
   border-style: none;
+  z-index: -1;
 }
 
 .fixed-select2 {
@@ -141,6 +142,7 @@ nav ul li a.focus, nav ul li > div.focus {
   background: var(--white);
   text-indent: 10px;
   border-style: none;
+  z-index: -1;
 }
 
 .margin-menu1 {

@@ -31,10 +31,15 @@
           <img src="../assets/check-icon.png" />
         </div>
       </li>
+      <li>
+        <div class="nav-icon" @click="toggleMenu()">
+          <img src="../assets/sandwich-icon.png" />
+        </div>
+        <div v-if="showMenu" class="dropdown-content">
+          <div class="dropdown-item" @click="logout()">Logout</div>
+        </div>
+      </li>
     </ul>
-    <!--<b-navbar-nav class="nav-link ml-auto d-lg-none">
-      <button class="btn btn-primary" @click="logout">Logout</button>
-    </b-navbar-nav>-->
   </nav>
 </template>
 
@@ -75,15 +80,45 @@ export default {
 
   data() {
     return {
+      showMenu: false,
     };
   },
 
   methods: {
+    toggleMenu() {
+      this.showMenu = !this.showMenu;
+      console.log(this.showMenu)
+    },
+
     async logout() {
       localStorage.removeItem("JWT");
-      this.$emit('logout')
+      this.$emit('onLogout')
       router.push('/')
     }
   },
 };
 </script>
+
+<style>
+.dropdown-content {
+  float: left;
+  overflow: hidden;
+  position: absolute;
+  min-width: 160px;
+  background-color: #f9f9f9;
+  box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
+  z-index: 1;
+  top: 48px;
+  right: 0px;
+  border: none;
+}
+
+.dropdown-item {
+  float: none;
+  color: black;
+  padding: 12px 16px;
+  text-decoration: none;
+  display: block;
+  text-align: left;
+}
+</style>
