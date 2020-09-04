@@ -15,13 +15,13 @@
       <div v-if="foreignCurrency1">
         <label for="amount1"
           arial-label="amount-foreing-currency1"
-          class="hide-label">Amount 1</label>
+          class="hide">Amount 1</label>
         <input v-model="amount1" id="amount1" class="amount" type="text"/>
       </div>
       <div v-if="foreignCurrency2">
         <label for="amount2"
           arial-label="amount-foreing-currency2"
-          class="hide-label">Amount 2</label>
+          class="hide">Amount 2</label>
         <input v-model="amount2" id="amount2" class="amount" type="text"/>
       </div>
       <div id="accounts" v-if="loaded">
@@ -337,27 +337,6 @@ export default {
 </script>
 
 <style scoped>
-label {
-  font-size: 14px;
-  display: block;
-  margin-top: 20px;
-}
-
-input {
-  font-size: 18px;
-  display: block;
-  width: 100%;
-  border: 0.5px solid var(--black);
-  box-sizing: border-box;
-  border-radius: 6px;
-  padding: 8px 10px;
-  margin-top: 8px;
-}
-
-.hide-label {
-  display: none;
-}
-
 #date {
   width: calc(100% - 145px);
   display: inline-block;
@@ -369,9 +348,9 @@ input {
   display: inline-block;
 }
 
- .amount {
-   text-align: end;
- }
+.amount {
+  text-align: end;
+}
 
 .account-section {
   display: inline-block;

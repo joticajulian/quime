@@ -1,15 +1,15 @@
 <template>
-  <div>
-    <h1>Quime</h1>
-    <div class="row">
-      <label class="label-form-control col-md-2">Username</label>
-      <input class="form-control col-md-10" type="text" v-model="username" @keyup.enter="login"/>
+  <div class="body-content">
+    <div class="container">
+      <h1>Quime</h1>
+      <form @click="$event.preventDefault()">
+        <label for="username" aria-label="username">Username</label>
+        <input id="username" type="text" v-model="username" @keyup.enter="login"/>
+        <label for="password" aria-label="password">Password</label>
+        <input id="password" type="password" v-model="password" @keyup.enter="login"/>
+        <button class="color1" @click="login">Login</button>
+      </form>
     </div>
-    <div class="row">
-      <label class="label-form-control col-md-2">Password</label>
-      <input class="form-control col-md-10" type="password" v-model="password" @keyup.enter="login"/>
-    </div>
-    <button class="btn btn-primary mt-3 mb-3" @click="login">login</button>
     <Alerts ref="alerts"/>
   </div>
 </template>
@@ -61,3 +61,16 @@ export default {
   }
 }
 </script>
+
+<style scoped>
+button {
+  margin-top: 15px;
+}
+
+.body-content {
+  display: block;
+  width: 100%;
+  height: 100vh;
+  background: linear-gradient(180deg, #e1e5ff 0%, #2d3b80 100%);
+}
+</style>
