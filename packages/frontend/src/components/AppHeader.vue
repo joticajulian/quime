@@ -36,6 +36,7 @@
           <img src="../assets/sandwich-icon.png" />
         </div>
         <div v-if="showMenu" class="dropdown-content">
+          <router-link class="dropdown-item" to="/settings">Settings</router-link>
           <div class="dropdown-item" @click="logout()">Logout</div>
         </div>
       </li>
@@ -100,7 +101,7 @@ export default {
 </script>
 
 <style>
-.dropdown-content {
+.dropdown-content, .dropdown-content:hover {
   float: left;
   overflow: hidden;
   position: absolute;
@@ -119,5 +120,10 @@ export default {
   text-decoration: none;
   display: block;
   text-align: left;
+  border: none;
+}
+
+.dropdown-item:hover {
+  background: var(--color1-hover);
 }
 </style>

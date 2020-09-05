@@ -5,6 +5,7 @@ import ReportsPage from './views/ReportsPage.vue'
 import MonthReportPage from './views/MonthReportPage.vue'
 import ListRecordsPage from './views/ListRecordsPage.vue'
 import UpdateRecordPage from './views/UpdateRecordPage.vue'
+import SettingsPage from './views/SettingsPage.vue'
 
 Vue.use(Router)
 
@@ -19,6 +20,11 @@ export default new Router({
       path: '/dashboard',
       name: 'reports',
       component: ReportsPage
+    },
+    {
+      path: '/settings',
+      name: 'settings',
+      component: SettingsPage
     },
     {
       path: '/months/:idMonth',
