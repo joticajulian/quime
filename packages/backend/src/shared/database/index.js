@@ -1,6 +1,6 @@
 var firebase = require('firebase-admin');
-const config = require('../config');
-const { safeObject } = require("../utils/utils");
+const config = require('../../config');
+const { safeObject } = require("../../utils/utils");
 
 const { collection } = config;
 const refFirestore = firebase.firestore().collection(config.collection);

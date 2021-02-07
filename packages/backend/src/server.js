@@ -8,6 +8,7 @@ require('dotenv').config()
 const config = require('./config')
 const apiRecords = require('./records/router')
 const apiAccounts = require("./accounts/router");
+const apiCurrencies = require("./currencies/router");
 const Auth = require("./auth");
 const errors = require("./errors")
 const logger = require("./logger");
@@ -34,6 +35,7 @@ class App {
 
     this.httpServer.use('/api/records', Auth.handleToken, apiRecords);
     this.httpServer.use('/api/accounts', Auth.handleToken, apiAccounts);
+    this.httpServer.use('/api/currencies', Auth.handleToken, apiCurrencies);
 
     this.httpServer.use((req, res, next) => {
       next(

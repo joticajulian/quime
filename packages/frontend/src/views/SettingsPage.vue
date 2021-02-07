@@ -67,6 +67,7 @@
 
       <!-- Modals -->
       <ModalCurrency ref="modalCurrency"
+        @onInsert="insertCurrency($event)"
         @onDelete="deleteCurrency($event)"
         @onUpdate="updateCurrency($event)"
         @onUpdatePrincipalCurrency="updatePrincipalCurrency($event)" />
@@ -114,17 +115,30 @@ export default {
   ],
 
   methods: {
-    
+    /*insertCurrency(currency) {
+      this.insertCurrency(currency);
+    },*/
+    updateCurrency(currency) {
+      console.log("updating currency");
+      console.log(currency);
+
+    }
   },
   
 }
 </script>
 
 <style scoped>
+
+h2 {
+  margin: 30px 0px 8px 0px; 
+}
+
 li {
   vertical-align: middle;
   cursor: pointer;
   list-style-type: none;
+  margin-bottom: 6px;
 }
 
 .inline {
@@ -181,14 +195,16 @@ li {
 
 .account .currency {
   display: inline-block;
-  text-align: end;
   vertical-align: middle;
   font-size: 14px;
   height: 28px;
   padding: 2px 0px 0px 0px;
-  width: 42px;
+  width: 70px;
   margin: 0px;
   box-sizing: border-box;
+  border-radius: 0px;
+  background: #cdff7c;
+  border: solid 5px #9ce582;
 }
 
 

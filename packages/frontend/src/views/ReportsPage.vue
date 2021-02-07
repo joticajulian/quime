@@ -293,7 +293,8 @@ export default{
       const response = await callApi.post("/parse", formFile);
       console.log(response.data);
       this.fileRecords = response.data;
-      this.$refs.modalUpload.show();
+      // this.$refs.modalUpload.show();
+      await this.insertRecords(response.data);
     },
 
     selectAccount(type, index){

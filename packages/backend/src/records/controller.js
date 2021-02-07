@@ -1,24 +1,8 @@
 const logger = require("../logger");
-const Book = require("./book");
+const book = require("../shared/book");
 const csvParser = require("./csvParser");
 const {BadRequestError, NotFoundError} = require("../errors");
 const { safeObject } = require("../utils/utils");
-
-let initialized = false;
-const book = new Book();
-
-function isInitialized() {
-  return initialized;
-}
-
-async function loadDB() {
-  try{
-    await book.initBook();
-  }catch(error){
-    logger.info('Firestore init error');
-    throw error;
-  }
-}
 
 function insert(input) {
   let records;
@@ -93,19 +77,22 @@ function getRecord(id) {
 }
 
 function getRecords() {
-  return {
-    db: safeObject(book.records),
-    state: safeObject(book.state),
-    accounts: book.accounts,
-    currencies: book.currencies,
-    estimations: book.estimations,
-    principalCurrency: book.principalCurrency,
-  };
+  try {
+    return {
+      db: safeObject(book.records),
+      state: safeObject(book.state),
+      accounts: book.accounts,
+      currencies: book.currencies,
+      estimations: book.estimations,
+      principalCurrency: book.principalCurrency,
+    };
+  } catch(error) {
+    console.log("book records");
+    console.log(book.records);
+    console.log("book state");
+    console.log(book.state);
+  }
 }
-
-loadDB().then(()=>{
-  initialized = true;
-})
 
 module.exports = {
   insert,
@@ -114,5 +101,4 @@ module.exports = {
   parse,
   getRecords,
   getRecord,
-  isInitialized,
 };

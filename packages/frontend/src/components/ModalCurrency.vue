@@ -52,16 +52,17 @@ export default {
         name: '',
         precision: '',
       },
+      isNewCurrency: false,
       makePrincipalCurrency: false,
     };
   },
 
   methods: {
     show(currency, principalCurrency) {
-      console.log(principalCurrency)
       if(currency) {
         this.currency = currency;
         this.title = "Modificar";
+        this.isNewCurrency = false;
       } else {
         this.currency = {
           name: '',
@@ -69,11 +70,11 @@ export default {
         };
         this.makePrincipalCurrency = false;
         this.title = "Insertar";
+        this.isNewCurrency = true;
       }
 
       if(principalCurrency === this.currency.name) {
         this.makePrincipalCurrency = true;
-        console.log("make princia")
       } else {
         this.makePrincipalCurrency = false;
       }
@@ -85,9 +86,12 @@ export default {
     },
 
     update() {
-      this.$emit('onUpdate', this.currency);console.log("principal currency: "+this.makePrincipalCurrency)
       if(this.makePrincipalCurrency)
         this.$emit('onUpdatePrincipalCurrency', this.currency.name);
+      else if(this.isNewCurrency)
+        this.$emit('onInsert', this.currency);
+      else
+        this.$emit('onUpdate', this.currency);
     },
   },
 }

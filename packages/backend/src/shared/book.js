@@ -1,9 +1,13 @@
 const logger = require("../logger");
 const { v1: uuidv1 } = require("uuid");
-const database = require("../database");
+const database = require("./database");
+
+let initialized = false;
 
 class Book {
   async initBook() {
+    if(initialized) return;
+    initialized = true;
     this.records = await database.getRecords();
     this.state = await database.getState();
     const data = await database.getAccounts();
@@ -71,6 +75,10 @@ class Book {
 
   setState(state) {
     this.state = state;
+  }
+
+  getCurrencies() {
+    return this.currencies;
   }
 
   getRecord(id) {
@@ -305,4 +313,7 @@ class Book {
   }
 }
 
-module.exports = Book;
+const book = new Book();
+book.initBook();
+
+module.exports = book;

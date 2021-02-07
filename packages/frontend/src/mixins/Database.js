@@ -37,7 +37,7 @@ export default {
   created(){
     const token = localStorage.getItem("JWT");
     callApi = axios.create({
-      baseURL: config.serverRecords,
+      baseURL: config.api,
       timeout: 30000,
       headers: {"Authorization" : `Bearer ${token}`},
     });
@@ -48,7 +48,7 @@ export default {
   methods: {
     async loadDatabase(force){
       if(!this.$store.state.records || force) {
-        const response = await callApi.get("/");
+        const response = await callApi.get("/records");
         this.$store.state.records = response.data.db;
         this.$store.state.state = response.data.state;
         this.$store.state.accounts = response.data.accounts;
@@ -70,9 +70,9 @@ export default {
       try {
         let response;
         if(record.id) {
-          response = await callApi.put(`/${record.id}`, record);
+          response = await callApi.put(`/records/${record.id}`, record);
         } else {
-          response = await callApi.put("/", record);
+          response = await callApi.put("/records/", record);
         }
         console.log(response.data);
       } catch(error) {
@@ -85,7 +85,7 @@ export default {
 
     async deleteRecord(record) {
       try {
-        const response = await callApi.delete(`/${record.id}`);
+        const response = await callApi.delete(`/records/${record.id}`);
         console.log(response.data);
       } catch(error) {
         throw error;
@@ -93,6 +93,11 @@ export default {
       this.dbLoaded = false;
       this.loadDatabase(true);
       router.push('/months/0?type=incomes')
+    },
+
+    async insertCurrency(currency) {
+      const response = await callApi.post("/currencies", currency);
+      console.log(response.data);
     },
 
     loadMonths(){
