@@ -4,9 +4,9 @@
   "private": true,
   "scripts": {
     "build": "cd packages/frontend && npm run build",
-    "install": "npm run install:frontend && npm run install:backend",
-    "install:frontend": "cd packages/frontend && npm install",
-    "install:backend": "cd packages/backend && npm install",
+    "install": "yarn run install:frontend && yarn run install:backend",
+    "install:frontend": "cd packages/frontend && yarn install",
+    "install:backend": "cd packages/backend && yarn install",
     "start": "cd packages/backend && node src/start.js",
     "test": "jest --coverage --runInBand"
   }
