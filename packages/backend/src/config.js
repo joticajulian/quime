@@ -1,4 +1,3 @@
-const jose = require("jose");
 const firebase = require('firebase-admin');
 require('dotenv').config();
 
@@ -9,7 +8,6 @@ const config = {
   frontend: {
     public: "../../packages/frontend/dist"
   },
-  privKeyJWK: jose.JWK.generateSync("EC", "secp256k1"),
   databaseURL: process.env.DATABASE_URL,
   credential: JSON.parse(Buffer.from(process.env.CREDENTIAL, 'base64').toString()),
   collection: process.env.COLLECTION || "test-collection",

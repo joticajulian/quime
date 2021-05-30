@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "private": true,
   "scripts": {
-    "build": "cd packages/frontend && npm run build",
+    "build": "cd packages/frontend && yarn run build",
     "install": "yarn run install:frontend && yarn run install:backend",
     "install:frontend": "cd packages/frontend && yarn install",
     "install:backend": "cd packages/backend && yarn install",

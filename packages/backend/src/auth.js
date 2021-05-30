@@ -1,6 +1,10 @@
-const jose = require("jose");
+const { SignJWT } = require('jose/jwt/sign');
+const { jwtVerify } = require('jose/jwt/verify');
+const { generateKeyPair } = require('jose/util/generate_key_pair')
 const config = require("./config");
 const { BadRequestError, UnauthorizedError, InvalidTokenError } = require("./errors");
+
+let privateKey = null;
 
 class Auth {
 
@@ -10,8 +14,16 @@ class Auth {
     return null;
   }
 
-  static generateToken() {
-    const token = jose.JWT.sign({ aud: "api" }, config.privKeyJWK);
+  static async generateToken() {
+    if(!privateKey) privateKey = (await generateKeyPair('ES256')).privateKey;
+
+    const token = await new SignJWT({ user: "quime" })
+      .setProtectedHeader({ alg: 'ES256' })
+      .setIssuedAt()
+      .setIssuer("quime")
+      .setAudience("quime")
+      //.setExpirationTime('2h')
+      .sign(privateKey)
     return { token };
   }
 
@@ -19,7 +31,7 @@ class Auth {
     return username === config.username && password === config.password;
   }
 
-  static handleToken(req, res, next) {
+  static async handleToken(req, res, next) {
     if (config.testMode) {
       next();
       return;
@@ -33,9 +45,11 @@ class Auth {
       return;
     }
 
-    let payload;
     try {
-      payload = jose.JWT.verify(token, config.privKeyJWK);
+      await jwtVerify(token, privateKey, {
+        issuer: "quime",
+        audience: "quime",
+      });
     } catch (error) {
       next(new InvalidTokenError(error.message));
       return;
@@ -45,10 +59,10 @@ class Auth {
     next();
   }
 
-  static login(req, res, next) {
+  static async login(req, res, next) {
     const { username, password } = req.body;
     if (Auth.validCredential(username, password)) {
-      const token = Auth.generateToken();
+      const token = await Auth.generateToken();
       res.send(token);
     } else {
       next(new BadRequestError("Invalid username or password"));

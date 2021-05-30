@@ -1,5 +1,5 @@
 const logger = require("../logger");
-const uuidv1 = require('uuid/v1');
+const { v1: uuidv1 } = require('uuid');
 const firebase = require('firebase-admin');
 const config = require("../config");
 
