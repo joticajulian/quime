@@ -76,12 +76,12 @@
 </template>
 
 <script>
-import AppHeader from '@/components/AppHeader'
-import Database from '@/mixins/Database'
-import ModalCurrency from '@/components/ModalCurrency'
+import AppHeader from "@/components/AppHeader";
+import Database from "@/mixins/Database";
+import ModalCurrency from "@/components/ModalCurrency";
 
 export default {
-  name: 'Settings',
+  name: "Settings",
 
   data() {
     return {
@@ -114,18 +114,18 @@ export default {
     Database,
   ],
 
-  methods: {
-    /*insertCurrency(currency) {
+  /*methods: {
+    insertCurrency(currency) {
       this.insertCurrency(currency);
-    },*/
+    },
     updateCurrency(currency) {
       console.log("updating currency");
       console.log(currency);
 
     }
-  },
+  },*/
   
-}
+};
 </script>
 
 <style scoped>

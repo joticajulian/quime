@@ -12,7 +12,7 @@
               </div>
             </div>
             <div>
-              <div class="header-icon" @click="$emit('onDelete', currency);">
+              <div class="header-icon" @click="remove()">
                 <img src="../assets/delete-icon.png" />
               </div>
             </div>
@@ -52,6 +52,7 @@ export default {
         name: '',
         precision: '',
       },
+      originalName: '',
       isNewCurrency: false,
       makePrincipalCurrency: false,
     };
@@ -63,6 +64,7 @@ export default {
         this.currency = currency;
         this.title = "Modificar";
         this.isNewCurrency = false;
+        this.originalName = currency.name;
       } else {
         this.currency = {
           name: '',
@@ -85,13 +87,22 @@ export default {
       this.showModal = false;
     },
 
+    remove() {
+      this.$emit('onDelete', this.currency);
+      this.hide();
+    },
+
     update() {
       if(this.makePrincipalCurrency)
         this.$emit('onUpdatePrincipalCurrency', this.currency.name);
       else if(this.isNewCurrency)
         this.$emit('onInsert', this.currency);
       else
-        this.$emit('onUpdate', this.currency);
+        this.$emit('onUpdate', {
+          originalName: this.originalName,
+          ...(this.currency),
+        });
+      this.hide();
     },
   },
 }

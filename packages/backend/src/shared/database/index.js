@@ -11,7 +11,7 @@ function onUpdate(callback) {
   });
 
   refFirestore.doc("state").onSnapshot(function(doc) {
-    callback("state", parseState(doc.data()));
+    callback("state", doc.data() ? parseState(doc.data()) : null);
   });
 
   refFirestore.doc("accounts").onSnapshot(function(doc) {
@@ -64,7 +64,7 @@ async function getState() {
   const doc = await refFirestore.doc('state').get();
 
   if(!doc.exists)
-    throw new Error(`No data in firebase for collection ${config.collection}`);
+    return null;
 
   return parseState(doc.data());
 }
@@ -98,7 +98,23 @@ function setAccounts(data) {
   if(!data.currencies)
     throw new Error("Save Error: currencies not defined");
 
+  if(!data.estimations)
+    throw new Error("Save Error: estimations are not defined");
+
   refFirestore.doc('accounts').set(data);
+}
+
+function setCurrencies(data) {
+  refFirestore.doc("currencies").set(data);
+}
+
+async function getCurrencies() {
+  const doc = await refFirestore.doc("currencies").get();
+
+  if(!doc.exists)
+    throw new Error(`No currencies in firebase for collection ${config.collection}`);
+
+  return doc.data();
 }
 
 module.exports = {
@@ -110,4 +126,6 @@ module.exports = {
   setAccounts,
   onUpdate,
   collection,
+  setCurrencies,
+  getCurrencies,
 };

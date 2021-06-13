@@ -247,5 +247,31 @@ export default {
       
       return balancesByType;
     },
+
+    async insertCurrency(currency) {
+      console.log(currency);
+      await callApi.post(`/currencies`, {
+        name: currency.name,
+        precision: parseInt(currency.precision),
+        symbol: currency.symbol,
+      });
+      this.loadDatabase(true);
+    },
+
+    async updateCurrency(currency) {
+      await callApi.put(`/currencies/${currency.originalName}`, currency);
+      console.log("currency updated ");
+      this.loadDatabase(true);
+    },
+
+    async deleteCurrency(currency) {
+      console.log("delete "+currency.name)
+      await callApi.delete(`/currencies/${currency.name}`);
+      this.loadDatabase(true);
+    },
+
+    updatePrincipalCurrency(currency) {
+      throw new Error("update principal currency not implemented");
+    }
   },
 };

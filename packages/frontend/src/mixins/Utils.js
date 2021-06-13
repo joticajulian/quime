@@ -14,9 +14,11 @@ export default {
       if(typeof amount !== "string")
         amount = BigInt(amount).toString();
 
-      const {precision} = this.$store.state.currencies.find((c) => (c.name === currency));
-      if(!precision)
+      const curr = this.$store.state.currencies.find((c) => (c.name === currency));
+      if(!curr || !curr.precision)
         throw new Error(`Precision of currency '${currency}' couldn't be determined`);
+
+      const {precision} = curr;
       
       if(amount.startsWith("-")) {
         isNegative = true;

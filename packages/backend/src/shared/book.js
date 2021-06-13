@@ -9,12 +9,12 @@ class Book {
     if(initialized) return;
     initialized = true;
     this.records = await database.getRecords();
-    this.state = await database.getState();
     const data = await database.getAccounts();
     this.accounts = data.accounts;
     this.currencies = data.currencies;
     this.principalCurrency = data.principalCurrency;
     this.estimations = data.estimations;
+    // this.state = await database.getState();
 
     //if(!this.state) {
       this.state = {};
@@ -255,6 +255,10 @@ class Book {
   }
 
   recalculateBalances(){
+    if(!this.state)
+      this.state = {
+        balancesByPeriod: []
+      };
     if(!this.state.balancesByPeriod) this.state.balancesByPeriod = [];
 
     var locatePeriod = (date) => {
@@ -305,11 +309,116 @@ class Book {
     this.updateDatabase("state");
   }
 
+  // currencies
+
+  insertCurrency(c) {
+    const currency = {
+      name: c.name,
+      symbol: "",
+      precision: parseInt(c.precision),
+    };
+    this.currencies.push(currency);
+    this.updateDatabase("accounts");
+  }
+
+  updateCurrency(name, c) {
+    const newCurrency = {
+      name: c.name,
+      symbol: c.symbol,
+      precision: parseInt(c.precision),
+    };
+    const currency = this.currencies.find(c => c.name === name);
+    
+    // update precision in records
+    const diffPrecision = newCurrency.precision - currency.precision;
+    if (parseInt(diffPrecision) !== diffPrecision)
+      throw new Error(`The precision difference is invalid (${diffPrecision})`);
+    let updateBalances;
+    if(diffPrecision === 0) {
+      updateBalances = false;
+    } else if(diffPrecision > 0) {
+      const factor = BigInt(Math.pow(10, diffPrecision));
+      const accountNames = this.accounts
+        .filter(a => a.currency === currency.name)
+        .map(a => a.name);
+      this.records.forEach(r => {
+        if (accountNames.includes(r.debit) && r.amountDebit)
+          r.amountDebit = (BigInt(r.amountDebit) * factor).toString();
+        if (accountNames.includes(r.credit) && r.amountCredit)
+          r.amountCredit = (BigInt(r.amountCredit) * factor).toString();
+      });
+      updateBalances = true;
+    } else {
+      const divfactor = BigInt(Math.pow(10, -diffPrecision));
+      const accountNames = this.accounts
+        .filter(a => a.currency === currency.name)
+        .map(a => a.name);
+      this.records.forEach(r => {
+        if (accountNames.includes(r.debit) && r.amountDebit) {
+          if (BigInt(r.amountDebit) % divfactor !== BigInt(0))
+            throw new Error(`Debit amount can not be adjusted to new precision. New precision: ${newCurrency.precision}. Current precision: ${currency.precision}. Record: ${JSON.stringify(r)}`);
+        }
+        if (accountNames.includes(r.credit) && r.amountCredit) {
+          if (BigInt(r.amountCredit) % divfactor !== BigInt(0))
+            throw new Error(`Credit amount can not be adjusted to new precision. New precision: ${newCurrency.precision}. Current precision: ${currency.precision}. Record: ${JSON.stringify(r)}`);
+        }
+      });
+      this.records.forEach(r => {
+        if (accountNames.includes(r.debit) && r.amountDebit)
+          r.amountDebit = (BigInt(r.amountDebit) / divfactor).toString();
+        if (accountNames.includes(r.credit) && r.amountCredit)
+          r.amountCredit = (BigInt(r.amountCredit) / divfactor).toString();
+      });
+      updateBalances = true;
+    }
+
+    // update currency name in accounts
+    this.accounts.forEach(a => {
+      if (a.currency === currency.name)
+        a.currency = newCurrency.name
+    });
+
+    // update currency in currencies
+    currency.name = newCurrency.name;
+    currency.precision = newCurrency.precision;
+
+    if (updateBalances) {      
+      this.updateDatabase("records");
+    };
+    this.oldestChangeState = 0;
+    this.cleanModifiedState();
+    this.recalculateBalances();
+    this.updateDatabase("accounts");
+  }
+
+  removeCurrency(name) {
+    const index = this.currencies.findIndex(c => c.name === name);
+    if (index < 0)
+      throw new Error(`currency ${name} not found`);
+    const accountNames = this.accounts
+      .filter(a => a.currency === name)
+      .map(a => a.name);
+    if (accountNames.length > 0)
+      throw new Error(`currency ${name} can not be removed because it depends on following accounts: ${accountNames}`);
+    this.currencies.splice(index, 1);
+    this.updateDatabase("accounts");
+  }
+
+  // database
+
   updateDatabase(resource) {
     if(resource === "records")
       database.setRecords(this.records);
     else if(resource === "state")
       database.setState(this.state);
+    // TODO: split accounts
+    else if(resource === "accounts")
+      database.setAccounts({
+        accounts: this.accounts,
+        currencies: this.currencies,
+        principalCurrency: this.principalCurrency,
+        estimations: this.estimations,
+      });
   }
 }
 
