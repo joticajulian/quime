@@ -1,6 +1,7 @@
-const logger = require("../logger");
 const { v1: uuidv1 } = require("uuid");
+const logger = require("../logger");
 const database = require("./database");
+const { BadRequestError, NotFoundError } = require("../errors");
 
 let initialized = false;
 
@@ -319,6 +320,9 @@ class Book {
     };
     this.currencies.push(currency);
     this.updateDatabase("accounts");
+    this.oldestChangeState = 0;
+    this.cleanModifiedState();
+    this.recalculateBalances();
   }
 
   updateCurrency(name, c) {
@@ -332,7 +336,7 @@ class Book {
     // update precision in records
     const diffPrecision = newCurrency.precision - currency.precision;
     if (parseInt(diffPrecision) !== diffPrecision)
-      throw new Error(`The precision difference is invalid (${diffPrecision})`);
+      throw new BadRequestError(`The precision difference is invalid (${diffPrecision})`);
     let updateBalances;
     if(diffPrecision === 0) {
       updateBalances = false;
@@ -356,11 +360,11 @@ class Book {
       this.records.forEach(r => {
         if (accountNames.includes(r.debit) && r.amountDebit) {
           if (BigInt(r.amountDebit) % divfactor !== BigInt(0))
-            throw new Error(`Debit amount can not be adjusted to new precision. New precision: ${newCurrency.precision}. Current precision: ${currency.precision}. Record: ${JSON.stringify(r)}`);
+            throw new BadRequestError(`Debit amount can not be adjusted to new precision. New precision: ${newCurrency.precision}. Current precision: ${currency.precision}. Record: ${JSON.stringify(r)}`);
         }
         if (accountNames.includes(r.credit) && r.amountCredit) {
           if (BigInt(r.amountCredit) % divfactor !== BigInt(0))
-            throw new Error(`Credit amount can not be adjusted to new precision. New precision: ${newCurrency.precision}. Current precision: ${currency.precision}. Record: ${JSON.stringify(r)}`);
+            throw new BadRequestError(`Credit amount can not be adjusted to new precision. New precision: ${newCurrency.precision}. Current precision: ${currency.precision}. Record: ${JSON.stringify(r)}`);
         }
       });
       this.records.forEach(r => {
@@ -394,13 +398,88 @@ class Book {
   removeCurrency(name) {
     const index = this.currencies.findIndex(c => c.name === name);
     if (index < 0)
-      throw new Error(`currency ${name} not found`);
+      throw new NotFoundError(`currency ${name} not found`);
     const accountNames = this.accounts
       .filter(a => a.currency === name)
       .map(a => a.name);
     if (accountNames.length > 0)
-      throw new Error(`currency ${name} can not be removed because it depends on following accounts: ${accountNames}`);
+      throw new BadRequestError(`currency ${name} can not be removed because it depends on following accounts: ${accountNames}`);
     this.currencies.splice(index, 1);
+    this.updateDatabase("accounts");
+  }
+
+  // accounts
+
+  insertAccount(account) {
+    if (this.accounts.find(a => a.name === account.name))
+      throw new BadRequestError(`Account ${account.name} already exist`);
+    if (!this.currencies.find(c => c.name === account.currency))
+      throw new BadRequestError(`Currency ${account.currency} does not exist`);
+    if (!(["asset", "liability", "income", "expense"].includes(account.type)))
+      throw new BadRequestError(`Account type must be one of the following: asset, liability, income, expense`);
+    this.accounts.push(account);
+    this.updateDatabase("accounts");
+    this.oldestChangeState = 0;
+    this.cleanModifiedState();
+    this.recalculateBalances();
+  }
+
+  updateAccount(name, newAccount) {
+    const account = this.accounts.find(a => a.name === name);
+    if(!account)
+      throw new BadRequestError(`Account ${name} does not exist`);
+    const updateName = newAccount.name !== account.name;
+    if (updateName && this.accounts.find(a => a.name === newAccount.name ))
+      throw new BadRequestError(`Account name ${newAccount.name} already exists`);
+    if (newAccount.currency !== account.currency)
+      throw new BadRequestError(`The currency can not be changed. Received ${newAccount.currency}. Expected: ${account.currency}`);
+    if (!(["asset", "liability", "income", "expense"].includes(newAccount.type)))
+      throw new BadRequestError(`Account type must be one of the following: asset, liability, income, expense`);
+    
+    // update records
+    if (updateName) {
+      this.records.forEach(r => {
+        if (r.debit === account.name) r.debit = newAccount.name;
+        if (r.credit === account.name) r.credit = newAccount.name;
+      });
+      account.name = newAccount.name;
+    };
+    account.type = newAccount.type
+    account.logo = newAccount.logo;
+
+    this.oldestChangeState = 0;
+    this.cleanModifiedState();
+    this.recalculateBalances();
+    this.updateDatabase("accounts");
+  }
+
+  removeAccount(name) {
+    const index = this.accounts.findIndex(a => a.name === name);
+    if (index < 0)
+      throw new NotFoundError(`Account ${name} not found`);
+    this.records.forEach(r => {
+      if (r.debit === name || r.credit === name)
+        throw new BadRequestError(`Account ${name} can not be removed because it depends on record ${JSON.stringify(r)}`);
+    });
+    this.accounts.splice(index, 1);
+    this.oldestChangeState = 0;
+    this.cleanModifiedState();
+    this.recalculateBalances();
+    this.updateDatabase("accounts");
+  }
+
+  insertEstimation(position, estimation) {
+    this.estimations.splice(position, 0, estimation);
+    this.updateDatabase("accounts");
+  }
+
+  updateEstimation(position, estimation) {
+    this.estimations[position] = estimation;
+    this.updateDatabase("accounts");
+  }
+
+  removeEstimation(position) {
+    this.estimations.splice(position, 1);
     this.updateDatabase("accounts");
   }
 

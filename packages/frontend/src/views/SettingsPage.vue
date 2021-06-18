@@ -20,6 +20,7 @@
       <ul>
         <li v-for="account in assets"
           :key="account.name"
+          @click="$refs.modalAccount.show(account);"
         >
           <div class="account">
             <div class="icon" :style="{ backgroundImage: 'url(' + account.logo + ')' }"></div>
@@ -32,6 +33,7 @@
       <ul>
         <li v-for="account in liabilities"
           :key="account.name"
+          @click="$refs.modalAccount.show(account);"
         >
           <div class="account">
             <div class="icon" :style="{ backgroundImage: 'url(' + account.logo + ')' }"></div>
@@ -44,6 +46,7 @@
       <ul>
         <li v-for="account in incomes"
           :key="account.name"
+          @click="$refs.modalAccount.show(account);"
         >
           <div class="account">
             <div class="icon" :style="{ backgroundImage: 'url(' + account.logo + ')' }"></div>
@@ -56,6 +59,7 @@
       <ul>
         <li v-for="account in expenses"
           :key="account.name"
+          @click="$refs.modalAccount.show(account);"
         >
           <div class="account">
             <div class="icon" :style="{ backgroundImage: 'url(' + account.logo + ')' }"></div>
@@ -71,6 +75,11 @@
         @onDelete="deleteCurrency($event)"
         @onUpdate="updateCurrency($event)"
         @onUpdatePrincipalCurrency="updatePrincipalCurrency($event)" />
+
+      <ModalAccount ref="modalAccount"
+        @onInsert="insertAccount($event)"
+        @onDelete="deleteAccount($event)"
+        @onUpdate="updateAccount($event)" />
     </div>
   </div>
 </template>
@@ -79,6 +88,7 @@
 import AppHeader from "@/components/AppHeader";
 import Database from "@/mixins/Database";
 import ModalCurrency from "@/components/ModalCurrency";
+import ModalAccount from "@/components/ModalAccount";
 
 export default {
   name: "Settings",
@@ -108,23 +118,12 @@ export default {
   components: {
     AppHeader,
     ModalCurrency,
+    ModalAccount,
   },
 
   mixins: [
     Database,
-  ],
-
-  /*methods: {
-    insertCurrency(currency) {
-      this.insertCurrency(currency);
-    },
-    updateCurrency(currency) {
-      console.log("updating currency");
-      console.log(currency);
-
-    }
-  },*/
-  
+  ],  
 };
 </script>
 

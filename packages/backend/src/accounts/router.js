@@ -19,7 +19,7 @@ router.put('/:name', async (req, res, next)=>{
 });
 
 // Insert account
-router.put('/', async (req, res, next)=>{
+router.post('/', async (req, res, next)=>{
   try {
     const account = req.body;
     const result = controller.insert(account);
@@ -41,13 +41,13 @@ router.delete('/:name', async (req, res, next)=>{
 });
 
 // get all accounts
-router.get('/', (req, res, next)=>{
+/*router.get('/', (req, res, next)=>{
   try {
     const result = controller.getAccounts();
     res.send(result);
   } catch(error) {
     next(error);
   }
-});
+});*/
 
 module.exports = router;
