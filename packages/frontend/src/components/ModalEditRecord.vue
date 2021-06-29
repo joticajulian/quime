@@ -5,13 +5,13 @@
       <div class="header">
         <ul>
           <li>
-            <router-link :to="`/editRecord?id=${record.id}`">
-              <div class="header-icon">
-                <img src="../assets/edit-icon.png" />
-              </div>
-            </router-link>
             <div>
-              <div class="header-icon" @click="$emit('onDelete', record);">
+              <div class="header-icon" @click="emitUpdate">
+                <img src="../assets/check-icon.png" />
+              </div>
+            </div>
+            <div>
+              <div class="header-icon" @click="emitDelete">
                 <img src="../assets/delete-icon.png" />
               </div>
             </div>
@@ -26,45 +26,51 @@
 
       <!-- Body -->
       <div class="body">
-        <div class="date">{{record.dateString}}</div>
-        <div class="type">{{record.badge}}</div>
-        <div class="amount">{{record.amountShow}}</div>
-        <div class="amount2" v-if="record.foreignCurrencyCredit">{{record.amountCreditShow}}</div>
-        <div class="amount2" v-if="record.foreignCurrencyDebit">{{record.amountDebitShow}}</div>
-        <div class="images-container">
-          <div class="account">
-            <div class="icon" v-bind:style="{ backgroundImage: 'url(' + record.imageCredit + ')' }"></div>
-            <div class="name">{{record.credit}}</div>
-          </div>        
-          <div class="arrow-icon"><img src="../assets/forward-icon48.png" /></div>
-          <div class="account">
-            <div class="icon" v-bind:style="{ backgroundImage: 'url(' + record.imageDebit + ')' }"></div>
-            <div class="name">{{record.debit}}</div>
-          </div>
-        </div>
-        <div class="description">{{record.description}}</div>
+        <EditRecord ref="editRecord"/>
       </div>
     </div>
   </div>
 </template>
 
 <script>
+import EditRecord from '@/components/EditRecord'
+
 export default {
-  name: 'ModalRecord',
+  name: 'ModalEditRecord',
 
   data() {
     return {
       showModal: false,
-      record: {},
+      index: 0,
     }
+  },
+
+  components: {
+    EditRecord,
   },
 
   methods: {
     show(event) {
-      this.record = event.item;
+      const { item, index } = event;
+      console.log(event)
+      this.index = index;
       this.showModal = true;
+      this.$nextTick(() => {
+        this.$refs.editRecord.loadRecord(item);
+      });      
     },
     hide() {
+      this.showModal = false;
+    },
+    emitUpdate() {
+      this.$emit('onUpdate', {
+        item: this.$refs.editRecord.getRecord(),
+        index: this.index,
+      });
+      this.showModal = false;
+    },
+    emitDelete() {
+      this.$emit('onDelete', this.index);
       this.showModal = false;
     },
   }
@@ -121,6 +127,8 @@ export default {
 
 .modal-content-record .body {
   padding: 20px;
+  overflow-y: scroll;
+  max-height: 250px;
 }
 
 .modal-content-record .body .date {

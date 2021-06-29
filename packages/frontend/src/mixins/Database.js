@@ -65,6 +65,12 @@ export default {
       this.dbLoaded = true;
     },
 
+    async saveRecords(records) {
+      await callApi.put(`/records`, records);
+      this.dbLoaded = false;
+      this.loadDatabase(true); 
+    },
+
     async saveRecord(record) {
       try {
         let response;

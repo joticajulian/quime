@@ -1,9 +1,17 @@
 <template>
   <div>
     <b-modal ref="modalUpload" hide-footer title="Leer archivo">
-      <ListRecords :records="fileRecords" :accounts="$store.state.accounts"/>
+      <ListRecords
+        :records="fileRecords"
+        :accounts="$store.state.accounts"
+        @onClick="$refs.modalEditRecord.show($event)"
+      />
       <button class="btn btn-primary mt-3" @click="insertRecords(fileRecords)">Insert</button>
     </b-modal>
+
+    <ModalEditRecord ref="modalEditRecord" 
+      @onUpdate="updateRecord($event);"
+      @onDelete="fileRecords.splice($event, 1)"/>
 
     <AppHeader back="/months/0?type=incomes"/>
     <div class="container-fluid mt-5">
@@ -30,6 +38,7 @@ import axios from 'axios'
 import Database from "@/mixins/Database";
 import AppHeader from '@/components/AppHeader'
 import ListRecords from '@/components/ListRecords'
+import ModalEditRecord from '@/components/ModalEditRecord'
 // import FormRecord from "@/components/FormRecord"
 import Alerts from "@/components/Alerts"
 import config from '@/config'
@@ -68,6 +77,7 @@ export default{
   components: {
     AppHeader,
     ListRecords,
+    ModalEditRecord,
     //FormRecord,
     Alerts,
   },
@@ -84,14 +94,17 @@ export default{
       this.$refs.alerts.hideAlerts()
       
       try{
-        var result = await callApi.put("/", records);
-        console.log(result.data)
+        await this.saveRecords(records);
         this.$refs.alerts.showSuccess('Records inserted');
-        this.load()
       }catch(error){
         this.$refs.alerts.showDanger(error.message)
         throw error
       }
+    },
+
+    updateRecord(event) {
+      const { item, index } = event;
+      this.fileRecords.splice(index, 1, item);
     },
 
     async uploadFile() {
@@ -99,10 +112,7 @@ export default{
       const formFile = new FormData();
       formFile.append("file", localFile);
       this.fileRecords = await this.parseFile(formFile);
-      console.log(this.fileRecords)
-      console.log("accounts")
-      console.log(this.$store.state.accounts)
-      this.$refs.modalUpload.show();
+      //this.$refs.modalUpload.show();
       // await this.insertRecords(response.data);
     },
   }

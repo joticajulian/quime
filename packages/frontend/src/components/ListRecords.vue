@@ -9,7 +9,7 @@
     <div class="card-record shadow"
       v-for="(item, index) in recordsShow"
       :key="index"
-      @click="onClick(item)"
+      @click="onClick(item, index)"
     ><div class="date">{{item.dateString}}</div>
       <div class="badge-container">
         <div class="badge" :class="item.classBadge">{{item.badge}}</div>
@@ -44,7 +44,7 @@ export default {
     refAccount: {
       type: String,
       default: "",
-    }
+    },
   },
 
   data() {
@@ -72,8 +72,8 @@ export default {
   },
   
   methods: {
-    onClick(item) {
-      this.$emit("onClick", item);
+    onClick(item, index) {
+      this.$emit("onClick", { item, index });
     },
 
     elaborateRecords() {
