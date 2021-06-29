@@ -41,7 +41,6 @@ export default {
       timeout: 30000,
       headers: {"Authorization" : `Bearer ${token}`},
     });
-    console.log("database.js created")
     this.loadDatabase();
   },
 
@@ -272,6 +271,51 @@ export default {
 
     updatePrincipalCurrency(currency) {
       throw new Error("update principal currency not implemented");
+    },
+
+    async insertAccount(account) {
+      await callApi.post("/accounts", {
+        name: account.name,
+        type: account.type,
+        currency: account.currency,
+        logo: account.logo,
+      });
+      this.loadDatabase(true);
+    },
+
+    async updateAccount(account) {
+      await callApi.put(`/accounts/${account.originalName}`, account);
+      this.loadDatabase(true);
+    },
+
+    async deleteAccount(account) {
+      await callApi.delete(`/accounts/${account.name}`);
+      this.loadDatabase(true);
+    },
+
+    async insertEstimation(event) {
+      const { position, estimation } = event;
+      await callApi.post(`/estimations`, {
+        position,
+        estimation,
+      });
+      this.loadDatabase(true);
+    },
+
+    async updateEstimation(event) {
+      const { position, estimation } = event;
+      await callApi.put(`/estimations/${position}`, estimation);
+      this.loadDatabase(true);
+    },
+
+    async deleteEstimation(position) {
+      await callApi.delete(`/estimations/${position}`);
+      this.loadDatabase(true);
+    },
+
+    async parseFile(formFile) {
+      const response = await callApi.post("records/parse", formFile);
+      return response.data;
     }
   },
 };

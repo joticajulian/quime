@@ -68,6 +68,32 @@
           </div>
         </li>
       </ul>
+      <button @click="$refs.modalAccount.show(null, $store.state.currencies);">New Account</button>
+      <h1>Estimations</h1>
+      <ul>
+        <li v-for="(estimation, index) in $store.state.estimations"
+          :key="index"
+          @click="$refs.modalEstimation.show(index, estimation)"
+        >
+          <div class="estimation">
+            <div class="description">{{estimation.description}}</div>
+            <div v-if="estimation.amount" class="amount">
+              <div>Amount</div>
+              <div>{{estimation.amount}}</div>
+            </div>
+            <div>
+              <div>Debit</div>
+              <div>{{estimation.resolve.debit}}</div>
+            </div>
+            <div>
+              <div>Credit</div>
+              <div>{{estimation.resolve.credit}}</div>
+            </div>
+          </div>  
+        </li>
+      </ul>
+
+
 
       <!-- Modals -->
       <ModalCurrency ref="modalCurrency"
@@ -80,6 +106,11 @@
         @onInsert="insertAccount($event)"
         @onDelete="deleteAccount($event)"
         @onUpdate="updateAccount($event)" />
+
+      <ModalEstimation ref="modalEstimation"
+        @onInsert="insertEstimation($event)"
+        @onDelete="deleteEstimation($event)"
+        @onUpdate="updateEstimation($event)" />
     </div>
   </div>
 </template>
@@ -89,6 +120,7 @@ import AppHeader from "@/components/AppHeader";
 import Database from "@/mixins/Database";
 import ModalCurrency from "@/components/ModalCurrency";
 import ModalAccount from "@/components/ModalAccount";
+import ModalEstimation from "@/components/ModalEstimation";
 
 export default {
   name: "Settings",
@@ -111,6 +143,7 @@ export default {
         this.incomes = this.$store.state.accounts.filter(a => a.type === "income");
         this.expenses = this.$store.state.accounts.filter(a => a.type === "expense");
         this.loaded = true;
+        clearInterval(timer);
       }
     }, 100);
   },
@@ -119,6 +152,7 @@ export default {
     AppHeader,
     ModalCurrency,
     ModalAccount,
+    ModalEstimation,
   },
 
   mixins: [

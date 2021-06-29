@@ -76,7 +76,7 @@ export default {
       this.$emit("onClick", item);
     },
 
-    elaborateRecords() { 
+    elaborateRecords() {
       const records = JSON.parse(JSON.stringify(this.records));
 
       records.forEach((r) => {
@@ -84,6 +84,8 @@ export default {
 
         const accountDebit = this.accounts.find( (a)=>{return a.name === r.debit}  );
         const accountCredit= this.accounts.find( (a)=>{return a.name === r.credit} );
+        if(!accountDebit) throw new Error(`Debit account ${r.debit} not found in the list of accounts`);
+        if(!accountCredit) throw new Error(`Credit account ${r.credit} not found in the list of accounts`);
 
         r.foreignCurrencyDebit = !!r.amountDebit;
         r.foreignCurrencyCredit = !!r.amountCredit;

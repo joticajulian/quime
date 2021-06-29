@@ -1,7 +1,7 @@
 import Vue from 'vue'
 import Router from 'vue-router'
 import Home from './views/Home.vue'
-import ReportsPage from './views/ReportsPage.vue'
+import ImportPage from './views/ImportPage.vue'
 import MonthReportPage from './views/MonthReportPage.vue'
 import ListRecordsPage from './views/ListRecordsPage.vue'
 import UpdateRecordPage from './views/UpdateRecordPage.vue'
@@ -17,9 +17,9 @@ export default new Router({
       component: Home
     },
     {
-      path: '/dashboard',
-      name: 'reports',
-      component: ReportsPage
+      path: '/import',
+      name: 'import',
+      component: ImportPage
     },
     {
       path: '/settings',

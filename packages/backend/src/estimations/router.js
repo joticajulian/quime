@@ -19,10 +19,9 @@ router.put('/:position', async (req, res, next)=>{
 });
 
 // Insert estimation
-router.put('/:position', async (req, res, next)=>{
+router.post('/', async (req, res, next)=>{
   try {
-    const { position } = req.params;
-    const estimation = req.body;
+    const { estimation, position } = req.body;
     controller.insert(position, estimation);
     res.send(estimation);
   } catch(error) {

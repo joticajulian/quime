@@ -36,6 +36,7 @@
           <img src="../assets/sandwich-icon.png" />
         </div>
         <div v-if="showMenu" class="dropdown-content">
+          <router-link class="dropdown-item" to="/import">Import</router-link>
           <router-link class="dropdown-item" to="/settings">Settings</router-link>
           <div class="dropdown-item" @click="logout()">Logout</div>
         </div>

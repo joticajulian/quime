@@ -37,6 +37,13 @@
             <option value="income">Income</option>
             <option value="expense">Expense</option>
           </select>
+          <select v-if="isNewAccount" v-model="account.currency">
+            <option
+              v-for="currency in currencies"
+              :key="currency.name"
+              :value="currency.name"
+            >{{currency.name}}</option>
+          </select>
           <label for="logo" aria-label="logo">Logo</label>
           <input v-model="account.logo" id="logo" type="text"/>
         </form>
@@ -59,17 +66,19 @@ export default {
         currency: '',
         logo: '',
       },
+      currencies: [],
       originalName: '',
       isNewAccount: false,
     };
   },
 
   methods: {
-    show(account) {
+    show(account, currencies) {
       if(account) {
         this.account = JSON.parse(JSON.stringify(account));
         this.title = "Modificar";
         this.isNewAccount = false;
+        this.currencies = [];
         this.originalName = account.name;
       } else {
         this.account = {
@@ -80,6 +89,7 @@ export default {
         },
         this.title = "Insertar";
         this.isNewAccount = true;
+        this.currencies = currencies;
       }
       this.showModal = true;
     },
