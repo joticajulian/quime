@@ -2,7 +2,7 @@
     "extends": ["plugin:vue/vue3-recommended"],
     "parserOptions": {
         "ecmaVersion": 6,
-        "sourceType": "module",
+        "sourceType": "module"
     },
     "rules": {
     }
