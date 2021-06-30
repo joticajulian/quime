@@ -76,7 +76,6 @@ export default {
       amount1: "",
       amount2: "",
       description: "",
-      type: "Gasto",
       account1: {
         logo: "",
         name: "",
@@ -237,7 +236,7 @@ export default {
       const record = this.$store.state.records.find(r => (r.id === id));
       this.renderType("other");
 
-      this.id = record.id;
+      // this.id = record.id;
       this.date = new Date(record.date).toISOString().slice(0,-14);
       this.description = record.description;
       this.amount = this.cents2dollars(record.amount);
