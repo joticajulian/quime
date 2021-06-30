@@ -38,6 +38,7 @@
         <div v-if="showMenu" class="dropdown-content">
           <router-link class="dropdown-item" to="/import">Import</router-link>
           <router-link class="dropdown-item" to="/settings">Settings</router-link>
+          <div class="dropdown-item" @click="exportJSON()">Export JSON</div>
           <div class="dropdown-item" @click="logout()">Logout</div>
         </div>
       </li>
@@ -92,11 +93,23 @@ export default {
       console.log(this.showMenu)
     },
 
+    exportJSON() {
+      const data = JSON.stringify(this.$store.state.records, null, 2);
+      const filename = `backup-${new Date().toISOString().slice(0,-14)}.json`;
+      var element = document.createElement('a');
+      element.setAttribute('href', 'data:text/plain;charset=utf-8,' + encodeURIComponent(data));
+      element.setAttribute('download', filename);    
+      element.style.display = 'none';
+      document.body.appendChild(element);    
+      element.click();    
+      document.body.removeChild(element);
+    },
+
     async logout() {
       localStorage.removeItem("JWT");
       this.$emit('onLogout')
       router.push('/')
-    }
+    },
   },
 };
 </script>
