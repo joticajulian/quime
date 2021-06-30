@@ -11,6 +11,7 @@
     "test": "jest --coverage --runInBand"
   },
   "devDependencies": {
-    "eslint": "5"
+    "eslint": "5",
+    "eslint-plugin-vue": "^7.12.1"
   }
 }
