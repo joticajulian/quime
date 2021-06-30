@@ -1,6 +1,6 @@
 {
   "name": "quime",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "private": true,
   "scripts": {
     "build": "cd packages/frontend && yarn run build",
@@ -9,5 +9,8 @@
     "install:backend": "cd packages/backend && yarn install",
     "start": "cd packages/backend && node src/start.js",
     "test": "jest --coverage --runInBand"
+  },
+  "devDependencies": {
+    "eslint": "^7.29.0"
   }
 }
