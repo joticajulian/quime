@@ -36,14 +36,25 @@ function remove(id) {
 }
 
 async function parse(data) {
+  // account
   try{
     const records = await csvParser.parse(data, 3);
     return records;
   } catch(error) {
     logger.info("Not parsed with option 3: " + error.message);
-    logger.info("Trying option 2");
+    logger.info("Trying option 5 (credit card)");
   }
 
+  // credit card
+  try{
+    const records = await csvParser.parse(data, 5);
+    return records;
+  } catch(error) {
+    logger.info("Not parsed with option 5: " + error.message);
+    logger.info("Trying option 2 (other bank account format)");
+  }
+
+  // account
   try{
     const records = await csvParser.parse(data, 2);
     return records;

@@ -146,6 +146,24 @@ const titles4 = [
   {name: 'saldo', type: 'number'},
 ]
 
+const expectedTitles5 = [
+  'Date transaction',
+  'Opration',
+  'Pays',
+  'Montant de transaction',
+  'Devise',
+  'Montant en EUR',
+];
+
+const titles5 = [
+  {name: 'date_transaction', type: 'date'},
+  {name: 'description', type: 'string'},
+  {name: 'pays', type: 'string'},
+  {name: 'amount_devise', type: 'number'},
+  {name: 'devise', type: 'string'},
+  {name: 'amount', type: 'number'},
+]
+
 function verifyTitles(fields, option) {
   if(!option) option = 1
   logger.info(`number of titles: ${fields.length}`)
@@ -162,8 +180,11 @@ function verifyTitles(fields, option) {
   }else if(option === 4){
     if(fields.length != expectedTitles4.length)
       throw new Error(`Number of titles: ${fields.length}. Expected: ${expectedTitles4.length}`)
+  }else if(option === 5){
+    if(fields.length != expectedTitles5.length)
+      throw new Error(`Number of titles: ${fields.length}. Expected: ${expectedTitles5.length}`)
   }else{
-    throw new Error(`The optin ${option} for verify fields does not exist`)
+    throw new Error(`The option ${option} for verify fields does not exist`)
   }
 
   for(var j in fields){
@@ -180,8 +201,11 @@ function verifyTitles(fields, option) {
     }else if(option === 4){
       if( fields[j] !== expectedTitles4[j] )
         throw new Error(`The title '${fields[j]}' should be equal to '${expectedTitles4[j]}'`)
+    }else if(option === 5){
+      if( fields[j] !== expectedTitles5[j] )
+        throw new Error(`The title '${fields[j]}' should be equal to '${expectedTitles5[j]}'`)
     }else{
-      throw new Error(`The optin ${option} for verify fields does not exist`)
+      throw new Error(`The option ${option} for verify fields titles does not exist`)
     }
   }
 }
@@ -256,6 +280,7 @@ function parseRecord(data,option) {
   if(option === 2) titles = titles2
   if(option === 3) titles = titles3
   if(option === 4) titles = titles4
+  if(option === 5) titles = titles5
   for(var i in titles){
     switch(titles[i].type){
       case 'string':
@@ -324,6 +349,8 @@ async function parse(data, option) {
       else if(option === 3 && fields.length < expectedTitles3.length)
         continue
       else if(option === 4 && fields.length < expectedTitles4.length)
+        continue
+      else if(option === 5 && fields.length < expectedTitles5.length)
         continue
       var record = parseRecord(fields, option)
       records.push(record)
