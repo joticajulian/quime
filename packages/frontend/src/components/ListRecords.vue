@@ -15,6 +15,7 @@
         <div class="badge" :class="item.classBadge">{{item.badge}}</div>
       </div>
       <div class="icon" v-bind:style="{ backgroundImage: 'url(' + item.image + ')' }"></div>
+      <div class="icon" v-bind:style="{ backgroundImage: 'url(' + item.image2 + ')' }"></div>
       <div class="description">{{item.description}}</div>
       <div class="amount">{{item.amountShow}}</div>            
       <div v-if="item.foreignCurrencyDebit" 
@@ -102,11 +103,17 @@ export default {
         // icons
         r.imageDebit = accountDebit.logo;
         r.imageCredit = accountCredit.logo;
-        if(accountDebit.name === this.refAccount) {
-          r.image = accountCredit.logo;
-        } else {
-          r.image = accountDebit.logo;
-        }
+
+        /* if (this.refAccount) {
+          if(accountDebit.name === this.refAccount) {
+            r.image = accountCredit.logo;
+          } else {
+            r.image = accountDebit.logo;
+          }
+        } else { */
+        r.image = accountDebit.logo;
+        r.image2 = accountCredit.logo;
+        // }
 
         // type of record
         var typeRec = this.typeRecord(accountDebit.type, accountCredit.type);

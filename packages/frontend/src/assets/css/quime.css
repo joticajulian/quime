@@ -412,7 +412,7 @@ a {
 }
 
 .card-record .description {
-  width: calc(100% - 162px);
+  width: calc(100% - 204px);
   vertical-align: top;
   font-size: 14px;
   word-wrap: break-word;
